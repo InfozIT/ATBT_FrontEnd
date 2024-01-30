@@ -11,7 +11,6 @@ import { UserDataContext } from '../../../contexts/usersDataContext';
 
 function EntityForm() {
   const { usersState: { users } } = useContext(UserDataContext);
-  console.log(users, "entity form")
   const usersEmails = users?.map(user => user.email);
   const { entitiesState: { pagination }, entitiesDispatch, deleteEntitybyId, createEntity } = useContext(EntitiesDataContext);
 
@@ -22,9 +21,7 @@ function EntityForm() {
     const file = event.target.files[0];
 
     if (file) {
-      console.log(file)
       const reader = new FileReader();
-      console.log(reader);
       reader.onloadend = () => {
         setImageSrc(reader.result);
         setEntityForm((e) => ({
@@ -46,8 +43,6 @@ function EntityForm() {
     Description: "",
     Members: []
   });
-  console.log(entityForm)
-  console.log(entityForm)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEntityForm((prevEntityForm) => ({

@@ -7,16 +7,19 @@ import axios from "axios";
 import entitiesDataReducer from "../reducers/entitiesDataReducer";
 import { apiUrl } from "../utils/constants";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export const EntitiesDataContext = createContext();
 
 const EntitiesDataProvider = ({ children }) => {
+  const navigate = useNavigate();
     const initialState = {
       entities:[],
       dashboard:{
         paginatedEntities:[],
         currentPage:1,
         totalPages: null,
+        totalEntries: null,
         perPage: 5,
         loading: false,
         search: "",
@@ -25,19 +28,19 @@ const EntitiesDataProvider = ({ children }) => {
         paginatedEntities:[],
         currentPage:1,
         totalPages: null,
+        totalEntries: null,
         perPage: 10,
         loading: false,
         search: "",
       }
     };
-
-    console.log(initialState.dashboard.loading)
   
     const [entitiesState, entitiesDispatch] = useReducer(
       entitiesDataReducer,
       initialState
     );
-    const getDashboardEntitiesData = async (pageNo=1,search="",perPage=5) => {
+    console.log(entitiesState)
+    const getDashboardEntitiesData = async () => {
       entitiesDispatch({
         type: "SET_LOADING",
         payload: {
@@ -45,16 +48,7 @@ const EntitiesDataProvider = ({ children }) => {
         }
       })
       try {
-        const { data } = await axios.get(`${apiUrl}/entite/list`);
-        const searchedEntities = data.Entites?.filter((entity) => {
-          return entity.Entite_Name.toLowerCase().includes(search)
-        },
-        )
-        const totalPages = Math.ceil(searchedEntities.length / perPage);
-        const paginatedResults = searchedEntities.slice(
-          (pageNo - 1) * perPage,
-          pageNo * perPage,
-        );
+        const { data } = await axios.get(`${apiUrl}/entite/list?page=${entitiesState.dashboard.currentPage}&pageSize=5&sortBy=Entite_Name&search=${entitiesState.dashboard.search}`);
         entitiesDispatch({
           type: "SET_LOADING",
           payload: {
@@ -65,9 +59,9 @@ const EntitiesDataProvider = ({ children }) => {
           type: "SET_PAGINATED_ENTITIES",
           payload: {
             context: 'DASHBOARD',
-              data: paginatedResults,
-              currentPage: pageNo,
-              totalPages: totalPages
+              data: data.Entites,
+              totalPages: data.totalPages,
+              totalEntries: data.totalEntries,
           }
       })
       } catch (error) {
@@ -75,7 +69,7 @@ const EntitiesDataProvider = ({ children }) => {
       }
       };
 
-    const getpaginatedEntitiesData = async (pageNo=1,search="",perPage=10) => {
+    const getpaginatedEntitiesData = async () => {
       entitiesDispatch({
         type: "SET_LOADING",
         payload: {
@@ -83,23 +77,14 @@ const EntitiesDataProvider = ({ children }) => {
         }
       })
       try {
-        const { data } = await axios.get(`${apiUrl}/entite/list`);
-        const searchedEntities = data.Entites?.filter((entity) => {
-          return entity.Entite_Name.toLowerCase().includes(search)
-        },
-        )
-        const totalPages = Math.ceil(searchedEntities.length / perPage);
-        const paginatedResults = searchedEntities.slice(
-          (pageNo - 1) * perPage,
-          pageNo * perPage,
-        );
+        const { data } = await axios.get(`${apiUrl}/entite/list?page=${entitiesState.pagination.currentPage}&pageSize=10&sortBy=${entitiesState?.pagination?.sortBy ?? 'Entite_Name'}&search=${entitiesState.pagination.search}`);
       return entitiesDispatch({
           type: "SET_PAGINATED_ENTITIES",
           payload: {
             context: 'ENTITES',
-              data: paginatedResults,
-              currentPage: pageNo,
-              totalPages: totalPages
+              data: data.Entites,
+              totalPages: data.totalPages,
+              totalEntries: data.totalEntries,
           }
       })
       } catch (error) {
@@ -116,8 +101,24 @@ const EntitiesDataProvider = ({ children }) => {
       const deleteEntitybyId = async(id)=> {
         try {
           const data = await axios.delete(`${apiUrl}/entite/delete/${id}`)
-          getpaginatedEntitiesData(entitiesState?.pagination?.currentPage,entitiesState?.pagination?.search,entitiesState?.pagination?.perPage);
-          console.log(data)
+          getpaginatedEntitiesData();
+          getDashboardEntitiesData();
+        } catch (error) {
+         console.error(error) 
+        }
+      }
+
+      const getEntitybyId = async(id)=> {
+        try {
+          const entityById = entitiesState?.entities?.find((element) => element.id === id) ?? null
+          if(!entityById){
+            const data = await axios.get(`${apiUrl}/entite/list/${id}`)
+            getpaginatedEntitiesData();
+            getDashboardEntitiesData();
+            return data;
+          } else {
+            return entityById;
+          }
         } catch (error) {
          console.error(error) 
         }
@@ -125,31 +126,30 @@ const EntitiesDataProvider = ({ children }) => {
 
       const createEntity = async(entityData)=>{
         try{
-          // const data = await axios.post("http://localhost:3001/entite/add",entityData);
           const {data, status} = await toast.promise(
-            axios.post(`http://localhost:3001/entite/add`, entityData),
+            axios.post(`${apiUrl}/entite/add`, entityData),
             {
               pending: 'verifying data',
               success: {
                 render(data) {
-                  return `Password Updated`
+                  return `Entity created`
                 }
               },
-              error: 'unautorized Access 🤯',
+              error: 'Error in creating Entity 🤯',
             },
           )
-          console.log(data);
           if (status === 201) {
-            console.log(data);
-            getpaginatedEntitiesData(entitiesState?.pagination?.currentPage,entitiesState?.pagination?.search,entitiesState?.pagination?.perPage);
+            getpaginatedEntitiesData();
+            getDashboardEntitiesData();
+            navigate(`entitylandingpage/${data.Entites.id}`)
           }
         } catch (error) {
           console.error(error) 
         }
       }
     useEffect(() => {
-      getpaginatedEntitiesData(entitiesState?.pagination?.currentPage,entitiesState?.pagination?.search,entitiesState?.pagination?.perPage);
-      getDashboardEntitiesData(entitiesState?.dashboard?.currentPage,entitiesState?.dashboard?.search,entitiesState?.dashboard?.perPage)
+      getpaginatedEntitiesData();
+      getDashboardEntitiesData();
       // eslint-disable-next-line
     }, [entitiesDispatch,entitiesState?.pagination?.currentPage,entitiesState?.pagination?.search,entitiesState?.pagination?.perPage,entitiesState?.dashboard?.currentPage,entitiesState?.dashboard?.search,entitiesState?.dashboard?.perPage]);
   
@@ -160,7 +160,8 @@ const EntitiesDataProvider = ({ children }) => {
           entitiesDispatch,
           getpaginatedEntitiesData,
           deleteEntitybyId,
-          createEntity
+          createEntity,
+          getEntitybyId
         }}
       >
         {children}

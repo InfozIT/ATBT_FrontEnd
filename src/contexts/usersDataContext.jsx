@@ -12,8 +12,6 @@ import { toast } from "react-toastify";
 
   const localStorageData = JSON.parse(localStorage.getItem("data"));
 
-  console.log(localStorageData?.token,"token")
-
 
   const UserDataProvider = ({ children }) => {
     const initialState = {
@@ -32,11 +30,8 @@ import { toast } from "react-toastify";
       initialState
     );
 
-    console.log(usersState)
-
     const getAllUsers = async () => {
       const { status, data: {users} } = await axios.get(`${apiUrl}/user/list`);
-      console.log(users,status)
       if (status === 200) {
         usersDispatch({
           type: "SET_USERS_DATA",
@@ -53,7 +48,6 @@ import { toast } from "react-toastify";
           type: "SET_LOADING"
         })
         const { status, data: {users} } = await axios.get(`${apiUrl}/user/list?page=${usersState.pagination.currentPage}&pageSize=5&sortBy=userName&search=${usersState.pagination.search}`);
-        console.log(users)
         if (status === 200) {
           usersDispatch({
             type: "SET_PAGINATED_USERS",
@@ -83,7 +77,6 @@ import { toast } from "react-toastify";
     };
 
     const createUser = async (userData) => {
-      console.log(userData)
       try {
         const { data, status } = await toast.promise(
           axios.post(`${apiUrl}/admin/create-user`, {...userData}, {
@@ -101,7 +94,6 @@ import { toast } from "react-toastify";
             error: 'Check user details 🤯',
           },
         )
-        console.log(data,status)
         if (status === 201) {
           getPaginatedUsersData()
           getAllUsers()
@@ -114,6 +106,7 @@ import { toast } from "react-toastify";
 
     const deleteUser = async(id) => {
       try {
+        console.log(localStorageData?.token)
         const { data, status } = await toast.promise(
           axios.delete(`${apiUrl}/admin/delete-user/${id}`, {
             headers: {
@@ -130,7 +123,6 @@ import { toast } from "react-toastify";
             error: 'Unable to delete user 🤯',
           },
         )
-        console.log(data,status)
         if (status === 200) {
           getPaginatedUsersData()
           getAllUsers()

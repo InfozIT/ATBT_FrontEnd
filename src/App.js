@@ -82,7 +82,7 @@ function App() {
               <Route path="otl" element={<EntityForm />} />
 
             </Route>
-            <Route path="/entitylandingpage" element={<EntityLandingPage />} />
+            <Route path="/entitylandingpage/:id" element={<EntityLandingPage />} />
             <Route path="/settingentityform" element={<SettingEntityForm />} />
             <Route path="/settingboardmeetingform" element={<SettingBoardMeetingForm />} />
             <Route path="/settingteamsform" element={<SettingTeamsForm />} />
