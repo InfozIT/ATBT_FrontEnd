@@ -122,7 +122,7 @@ const SettingEntityForm = () => {
     };
 
 
-    const [inputType, setInputType] = useState(["", "text", "email", "password",
+    const [inputType, setInputType] = useState(["text", "email", "password",
         "number", "textarea", "file", "date", "select", "multiselect", "checkbox", "range", "time"])
 
     const handleSubmitCustomForm = () => {
@@ -173,7 +173,7 @@ const SettingEntityForm = () => {
                     value: "",
                     filterable: true,
                     mandatory: true,
-                    field :"predefined",
+                    field: "predefined",
                     options: [
                         "Reliace", "Infosys", "Tata consultancy",
                         "Reliace"
@@ -469,6 +469,8 @@ const SettingEntityForm = () => {
                                                         sm:leading-6 ${editIndex == null ? "" : "pointer-events-none opacity-30"}`}
 
                                                             value={newInputField.type} onChange={handleInputChange}>
+                                                            <option value=""  ></option>
+
                                                             {inputType && inputType.map((type, index) => (
                                                                 <option value={type}  >{type}</option>
                                                             ))}

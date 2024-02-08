@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import './EntityForm.css';
-
 import defprop from '../../../Images/defprof.svg';
 import useDebounce from '../../../hooks/debounce/useDebounce';
 import { UserDataContext } from '../../../contexts/usersDataContext/usersDataContext';
@@ -111,7 +110,7 @@ function EntityForm() {
 
         }
         else if (customFormFields[i].value.length < 3) {
-          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "Name should contain atleast 3 characterssssssssssssssssssssssssssssssssssssssssssssssssssss" }))
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "Name should contain atleast 3 characters" }))
 
         }
         else {
@@ -133,9 +132,43 @@ function EntityForm() {
 
         }
         else if (customFormFields[i].value.length < 3) {
-          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "Name should contain atleast 3 characterssssssssssssssssssssssssssssssssssssssssssssssssssss" }))
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "Name should contain atleast 3 characters" }))
 
         }
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "email" && customFormFields[i].mandatory) {
+        if (customFormFields[i].value.length < 1) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "number" && customFormFields[i].mandatory) {
+        if (customFormFields[i].value.length < 1) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+       else if (customFormFields[i].value.length != 10) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter Correct ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "select" && customFormFields[i].mandatory) {
+        if (customFormFields[i].value.length < 1) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
         else {
           setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
         }
@@ -150,6 +183,57 @@ function EntityForm() {
           setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
         }
       }
+      if (customFormFields[i].type == "date" && customFormFields[i].mandatory) {
+        if (!customFormFields[i].value) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "checkbox" && customFormFields[i].mandatory) {
+        if (!customFormFields[i].value) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "range" && customFormFields[i].mandatory) {
+        if (!customFormFields[i].value) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "time" && customFormFields[i].mandatory) {
+        if (!customFormFields[i].value) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+      if (customFormFields[i].type == "password" && customFormFields[i].mandatory) {
+        if (customFormFields[i].value.length < 1) {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: `Please Enter ${customFormFields[i].label}` }))
+
+        }
+
+        else {
+          setErrors((prev) => ({ ...prev, [customFormFields[i].inputname]: "" }))
+        }
+      }
+
     }
     const formData = new FormData(e.target)
     formData.set("members", JSON.stringify(['get', 'dynamic', 'mails']));
@@ -500,7 +584,7 @@ function EntityForm() {
                           {item.options.map((option, subindex) => (
                             <div key={subindex} className="mr-2 mb-2">
                               <input
-                                type="checkbox" 
+                                type="checkbox"
                                 id={option}
                                 checked={item.value.includes(option)}
                                 onChange={(e) => handleChange(index, option)}
