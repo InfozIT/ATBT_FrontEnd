@@ -20,14 +20,20 @@ let status = [
 ];
 let moduleName;
 let parentPath
+let groupName;
+
 export async function tasksLoader({ request, params }) {
   try {
     if (params.boardmeetings === "userboardmeetings") {
       moduleName = "user";
       parentPath = "users"
+      groupName = "groupUser"
     }
     if (params.boardmeetings === "entityboardmeetings") {
       moduleName = "entity";
+      parentPath = "entities"
+      groupName = "groupEntity"
+
     }
     const url = new URL(request.url);
 
@@ -46,14 +52,14 @@ export async function tasksLoader({ request, params }) {
         taskID ? atbtApi.get(`task/listbyid/${taskID}`) : null,
         taskID ? atbtApi.get(`task/subList/${taskID}`) : null,
         subTaskID ? atbtApi.get(`task/subtaskbyid/${subTaskID}`) : null,
-        atbtApi.get(`/boardmeeting/groupUser/${params.BMid}`),
+        groupName ?  atbtApi.get(`/boardmeeting/${groupName}/${params.BMid}`) : {}
         // atbtApi.get(`task/listAll?user=103`)
         // Api For Get boardmeeting members
-        // get('/groupEntiy/:id')                Meeting.ListEntiyGroup
+        // get('/groupEntity/:id')                Meeting.ListEntiyGroup
         // get('/groupTeam/:id',)            Meeting.ListTeamGroup)
         // get('/groupUser/:id')              Meeting.ListUserGroup)
       ]);
-
+console.log("personResponsiblee",personResponsible)
     let updatedTask = task?.data[0];
     let updatedSubTask = subTask?.data[0];
     let taskAge = null;
@@ -112,7 +118,7 @@ export async function TasksActions({ request, params }) {
         if (params.boardmeetings === "entityboardmeetings") {
           moduleName = "entity";
         }
-        if (params.boardmeetings === "entityboardmeetings") {
+        if (params.boardmeetings === "teamboardmeetings") {
           moduleName = "team";
         }
         if (requestBody.type === "ADD_NEW_TASK") {
@@ -189,7 +195,7 @@ export async function TasksActions({ request, params }) {
     }
   }
 }
-const Tasks = () => {
+const Tasks = ({NameModule}) => {
   let submit = useSubmit();
   const data = useLoaderData();
   let [tasks, setTasks] = useState([]);
@@ -378,8 +384,8 @@ const Tasks = () => {
         <div className="flex overflow-x-auto my-2">
           {!BMid && (
             <NavLink
-              to="/users/160/tasks?status=To-Do"
-              end
+            to={`/${NameModule}/${id}/tasks?status=To-Do`}
+            end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "toDo" ? "border-b-2 border-orange-500 text-orange-600" : ""
               }`}
@@ -390,7 +396,9 @@ const Tasks = () => {
           )}
           {!BMid && (
             <NavLink
-              to="/users/160/tasks?status=In-progress"
+            
+              to={`/${NameModule}/${id}/tasks?status=In-Progress`}
+
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "inProgress"
@@ -405,7 +413,9 @@ const Tasks = () => {
 
           {!BMid && (
             <NavLink
-              to="/users/160/tasks?status=overdue"
+            to={`/${NameModule}/${id}/tasks?status=Over-Due`}
+
+            
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "OverDue" ? "border-b-2 border-orange-500 text-orange-600" : ""
@@ -417,7 +427,9 @@ const Tasks = () => {
           )}
           {!BMid && (
             <NavLink
-              to="/users/160/tasks?status=Completed"
+            to={`/${NameModule}/${id}/tasks?status=Completed`}
+
+           
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Completed" ? "border-b-2 border-orange-500 text-orange-600" : ""
@@ -429,7 +441,7 @@ const Tasks = () => {
           )}
           {!BMid && (
             <NavLink
-              to="/users/160/tasks"
+            to={`/${NameModule}/${id}/tasks`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Master" ? "border-b-2 border-orange-600" : ""
@@ -567,7 +579,7 @@ const Tasks = () => {
                   <td
                     className="border py-1.5 px-3 "
                     title={task?.members}
-                    style={{ width: "15rem" }}
+                    style={{ width: "14rem" }}
                   >
                     <Select
                       options={members}
@@ -655,7 +667,7 @@ const Tasks = () => {
                       menuPlacement="auto"
                     />
                   </td>
-                  <td className="border py-1.5 px-3" style={{ width: "11rem" }}>
+                  <td className="border py-1.5 px-3" style={{ width: "10rem" }}>
                     <input
                       className=" border border-transparent text-black px-1.5 py-2 rounded-md  bg-[#f9fafb] focus:outline-none text-sm focus:border-orange-400  date_type"
                       type="date"
@@ -669,7 +681,7 @@ const Tasks = () => {
                   <td
                     className="border py-1.5 px-3 "
                     title={task?.status}
-                    style={{ width: "8rem" }}
+                    style={{ width: "6.5rem" }}
                   >
                     <Select
                       options={status}
@@ -698,7 +710,7 @@ const Tasks = () => {
                           "&:focus-within": {
                             borderColor: "#fb923c",
                           },
-                          width: "8rem",
+                          width: "6.5rem",
                         }),
                         option: (provided, state) => ({
                           ...provided,
@@ -743,7 +755,7 @@ const Tasks = () => {
                   <td className="border py-1.5 px-3 text-sm text-gray-600">
                     Updated By Admin
                   </td>
-                  <td className="border py-1.5 px-3 text-sm text-gray-600">
+                  <td className="border py-1.5 px-3 text-sm text-gray-600" style={{width :"3rem"}}>
                     <svg
                       onClick={() => handleDeleteTask(task.id)}
                       xmlns="http://www.w3.org/2000/svg"

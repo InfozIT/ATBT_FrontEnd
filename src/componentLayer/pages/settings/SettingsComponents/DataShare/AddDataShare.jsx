@@ -21,6 +21,7 @@ export async function loader({ request, params }) {
         label: item.name,
       })),
     };
+    console.log("combinedResponse add data share",combinedResponse)
     return combinedResponse;
   } catch (error) {
     console.error("Error occurred:", error);
@@ -33,15 +34,17 @@ const AddDataShare = () => {
   const [dataShareName, setDataShareName] = useState("");
   const [dataShareDescription, setDataShareDescription] = useState("");
   let moduleOptions = [
-    { value: "User", label: "user" },
-    { value: "Entity", label: "entity" },
+    { value: "user", label: "user" },
+    { value: "entity", label: "entity" },
   ];
   const [module, setModule] = useState("");
+  console.log("module",module)
 
   const handleModuleChange = (selected) => {
     setModule(selected);
   };
 const [shareDataofOptions, setShareDataOfOptions] = useState([]);
+console.log("shareDataofOptions",shareDataofOptions)
   useEffect(() => {
     if (module?.value === "user") {
       setShareDataOfOptions(data.users);
@@ -202,13 +205,13 @@ const handleInputChange = (newValue) => {
     <div className="p-4 bg-[#f8fafc]">
       <div className="grid grid-cols-1  sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 lg:gap-5 gap-y-4">
         <div className="col-span-1 ">
-          <label className="block text-sm font-medium leading-6  text-gray-900 mb-1">
+          <label className="block text-sm font-medium leading-6  text-gray-900 mb-1 ">
             Name <span className="text-red-600">*</span>
           </label>
           <input
             type="text"
             placeholder="Enter name"
-            className="px-2 py-1.5 text-md block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400  placeholder-small"
+            className="px-2 py-1.5 text-md block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400  placeholder:text-xs"
             value={dataShareName}
             onChange={(event) => setDataShareName(event.target.value)}
           />
@@ -218,13 +221,13 @@ const handleInputChange = (newValue) => {
                         </div>
         </div>
         <div className="col-span-1 ">
-          <label className="block text-sm font-medium leading-6  text-gray-900 mb-1">
+          <label className="block text-sm font-medium leading-6  text-gray-900 mb-1 ">
             Description
           </label>
           <input
             type="text"
             placeholder="Enter Description"
-            className="px-2 py-1.5 text-md block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400 placeholder-small"
+            className="px-2 py-1.5 text-md block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400 placeholder:text-xs"
             value={dataShareDescription}
             onChange={(event) => setDataShareDescription(event.target.value)}
           />

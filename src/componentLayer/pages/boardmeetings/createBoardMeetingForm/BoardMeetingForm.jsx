@@ -7,29 +7,49 @@ import { BoardMeetingsDataContext } from "../../../../contexts/boardmeetingsData
 import $ from "jquery";
 import { useNavigate, useLoaderData, useParams } from "react-router-dom";
 import atbtApi from "../../../../serviceLayer/interceptor";
+import Select from "react-select";
 
 const userData = JSON.parse(localStorage.getItem("data"));
 let createdBy = userData?.user?.id;
 const token = userData?.token;
 const role = userData?.role?.name;
-export async function boardmeetingFormLoader({ params }) {
+export async function boardmeetingFormLoader({ params, request }) {
+  const url = new URL(request.url);
+  const boardmeetingFor = url.searchParams.get("boardmeetingFor");
+  const boardmeetingForID = parseInt(url.searchParams.get("boardmeetingForID"));
+
   try {
-    const [formResponse, boardmeetingResponse, usersList] = await Promise.all([
+    let [formResponse, boardmeetingResponse, usersList] = await Promise.all([
       atbtApi.get(`form/list?name=boardmeetingform`),
       params.id ? atbtApi.get(`boardmeeting/getByid/${params.id}`) : null, //Api for edit
       atbtApi.post(`public/list/user`),
     ]);
     let boardmeetingData = null;
     if (params && params.id) {
-    
       console.log(boardmeetingResponse, "loader boardmeeting data");
       boardmeetingData = boardmeetingResponse?.data;
+      console.log(boardmeetingResponse, "loader boardmeeting data updated");
     }
-
+    usersList = usersList?.data?.users?.map((item) => ({
+      value: item.id,
+      label: item.email,
+      image: item.image,
+      name: item.name,
+    }));
+    if (boardmeetingFor === "user" && boardmeetingForID) {
+      usersList = usersList.filter((user) => user.value !== boardmeetingForID);
+    }
+    if (boardmeetingFor === "entity" && boardmeetingForID) {
+      const [EntityUsersList] = await Promise.all([
+        atbtApi.post(`entity/User/list/${boardmeetingForID}`),
+      ]);
+      const entityIds = EntityUsersList?.data.map((entity) => entity.id);
+      usersList = usersList.filter((user) => !entityIds.includes(user.value));
+    }
     const formData = formResponse.data.Data;
     console.log("formData", formData, "boardmeetingData", boardmeetingData);
 
-    return { boardmeetingData, formData,usersList };
+    return { boardmeetingData, formData, usersList };
   } catch (error) {
     if (error.response) {
       throw new Error(`Failed to fetch data: ${error.response.status}`);
@@ -51,7 +71,16 @@ function BoardMeetingForm() {
   console.log(boardmeeting, "cmp loader data");
   useEffect(() => {
     if (id && boardmeeting?.boardmeetingData?.members) {
-      setSelected(boardmeeting.boardmeetingData.members);
+      const updatedMembersForSelect = boardmeeting.boardmeetingData.members.map(
+        (member) => ({
+          value: member.id,
+          label: member.email,
+          image: member.image,
+          name: member.name,
+        })
+      );
+
+      setSelected(updatedMembersForSelect);
     }
   }, [id, boardmeeting]);
   function setInitialForm() {
@@ -77,11 +106,21 @@ function BoardMeetingForm() {
   const { createBoardMeeting, updateBoardMeeting } = useContext(
     BoardMeetingsDataContext
   );
-  const usersEmails = boardmeeting.usersList.data.users
+  const [selected, setSelected] = useState([]);
+
+  const [usersEmails, setUsersEmails] = useState(boardmeeting.usersList);
+
+  useEffect(() => {
+    const filteredEmails = boardmeeting.usersList.filter(
+      (mainObj) =>
+        !selected.some((selectedObj) => selectedObj.value === mainObj.value)
+    );
+    setUsersEmails(filteredEmails);
+  }, [selected, boardmeeting.usersList]);
+
   const { debouncedSetPage, debouncedSetSearch } = useDebounce(usersDispatch);
   let [openOptions, setopenOptions] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selected, setSelected] = useState([]);
   const [showUsers, setShowUsers] = useState(false);
   let [customFormFields, setCustomFormFields] = useState(() =>
     setInitialForm()
@@ -93,8 +132,9 @@ function BoardMeetingForm() {
     }
   }, [id]);
   useEffect(() => {
-    console.log(customFormFields, "cfff");
+    console.log(selected, "selected");
     console.log("errors", errors);
+    console.log("customFormFields", customFormFields);
   });
   const handleInputChange = (e) => {
     setShowUsers(true);
@@ -113,10 +153,19 @@ function BoardMeetingForm() {
     }
   };
   const handleClick = (value, index) => {
-    setSelected((e) => [...e, value]);
+    console.log("value", value);
+    setSelected(value);
+    // setSelected((e) => [...e, value[0]]);
     const updatedFormData = [...customFormFields];
-    let members = updatedFormData[index].value;
-    members.push(value);
+    let members = value;
+    console.log("members", members);
+    // members.push(value);
+    members = members?.map((item) => ({
+      name: item.name,
+      id: item.value,
+      image: item.image,
+      email: item.label,
+    }));
     updatedFormData[index].value = members;
     setCustomFormFields(updatedFormData);
     setSearchTerm("");
@@ -139,7 +188,7 @@ function BoardMeetingForm() {
     updatedFormData[index].value = updatedMembers;
     setCustomFormFields(updatedFormData);
   };
-const handleChange = (index, newValue) => {
+  const handleChange = (index, newValue) => {
     const updatedFormData = [...customFormFields];
     if (updatedFormData[index].type != "multiselect") {
       updatedFormData[index].value = newValue;
@@ -436,13 +485,14 @@ const handleChange = (index, newValue) => {
           );
         }
       }
-     formData.set("customFieldsData", JSON.stringify(customFormFields));
+      formData.set("customFieldsData", JSON.stringify(customFormFields));
       formData.set("createdBy", createdBy);
       const formDataObj = {};
       formData.forEach((value, key) => {
         formDataObj[key] = value;
       });
-let response;
+
+      let response;
       if (!!id && !!boardmeeting?.boardmeetingData) {
         console.log("updating");
         response = await updateBoardMeeting(formData, id);
@@ -457,10 +507,15 @@ let response;
       console.log("jsonData submitted", response);
       if (response?.status === 201) {
         console.log("data is 201");
-        if(boardmeetingFor ==="user"){
-    
-       navigate(`/users/${boardmeetingForID}/userboardmeetings/${response.data}`);
-
+        if (boardmeetingFor === "user") {
+          navigate(
+            `/users/${boardmeetingForID}/userboardmeetings/${response.data}`
+          );
+        }
+        if (boardmeetingFor === "entity") {
+          navigate(
+            `/entities/${boardmeetingForID}/entityboardmeetings/${response.data}`
+          );
         }
       }
     }
@@ -635,7 +690,7 @@ let response;
                       <div className="relative">
                         <label
                           htmlFor="email"
-                          className="block text-sm  font-medium leading-6 mt-2 text-gray-900"
+                          className="block text-sm  font-medium leading-6  text-gray-900"
                         >
                           {item.label}
                           {item.mandatory ? (
@@ -644,84 +699,59 @@ let response;
                             <span> </span>
                           )}
                         </label>
-                        <div
-                          className=" 
-                       flex flex-wrap gap-1 px-2 py-2 text-sm  w-full  bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400 selected-users-container relative  rounded-md"
-                        >
-                          {selected &&
-                            selected.length > 0 &&
-                            selected.map((result, selectedIndex) => {
-                              let mail = result.email.split("@")[0];
-                              return (
-                                <span className="flex gap-1 text-xs mt-1 border-2 border-gray-200 rounded-md  focus:border-orange-600">
-                                  {result.image ? (
-                                    <img
-                                      src={
-                                        typeof result.image === "string"
-                                          ? result.image
-                                          : URL.createObjectURL(result.image)
-                                      }
-                                      name="EntityPhoto"
-                                      alt="Entity Photo"
-                                      className="rounded-lg w-4 h-4 "
-                                    />
-                                  ) : (
-                                    <img
-                                      className="w-4 h-4 rounded-lg "
-                                      src={defprop}
-                                      alt="default image"
-                                    />
-                                  )}
-                                  {mail}
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 16 16"
-                                    fill="currentColor"
-                                    className="w-4 h-4 "
-                                    onClick={() =>
-                                      handleRemove(selectedIndex, index)
-                                    }
-                                  >
-                                    <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
-                                  </svg>
-                                </span>
-                              );
-                            })}
-                          <input
-                            type="text"
-                            placeholder="Type email id"
-                            tabindex="0"
-                            aria-describedby="lui_5891"
-                            aria-invalid="false"
-                            style={{ border: "none" }}
-                            className="bg-[#f8fafc]   focus:outline-none  placeholder:text-xs"
-                            value={searchTerm}
-                            onChange={handleInputChange}
-                          />
-                        </div>
+                        <Select
+                          styles={{
+                            control: (provided, state) => ({
+                              ...provided,
+                              backgroundColor: "#f9fafb", // Change the background color of the select input
+                              borderWidth: state.isFocused ? "1px" : "1px", // Decrease border width when focused
+                              borderColor: state.isFocused
+                                ? "#orange-400"
+                                : "#d1d5db", // Change border color when focused
+                              boxShadow: state.isFocused
+                                ? "none"
+                                : provided.boxShadow, // Optionally remove box shadow when focused
+                              maxHeight: "150px",
+                              overflowY: "auto",
+                              fontSize: "0.7rem",
+                            }),
+                            placeholder: (provided) => ({
+                              ...provided,
+                              fontSize: "small", // Adjust the font size of the placeholder text
+                            }),
+                            option: (provided, state) => ({
+                              ...provided,
+                              color: state.isFocused ? "#fff" : "#000000",
+                              backgroundColor: state.isFocused
+                                ? "#ea580c"
+                                : "transparent",
 
-                        {showUsers && searchTerm.length > 0 && (
-                          <ul className="user-list z-10 absolute top-full left-0 bg-gray-50 border border-1 border-gray-200 w-full">
-                            {usersEmails
-                              .filter(
-                                (mainObj) =>
-                                  !selected.some(
-                                    (selectedObj) =>
-                                      selectedObj.id === mainObj.id
-                                  )
-                              )
-                              .map((user, ind) => (
-                                <li
-                                  key={ind}
-                                  className="px-3 py-1 text-sm hover:bg-gray-200"
-                                  onClick={() => handleClick(user, index)}
-                                >
-                                  {user.email}
-                                </li>
-                              ))}
-                          </ul>
-                        )}
+                              "&:hover": {
+                                color: "#fff",
+                                backgroundColor: "#ea580c",
+                              },
+                              fontSize: "0.7rem",
+                            }),
+                          }}
+                          theme={(theme) => ({
+                            ...theme,
+                            borderRadius: 5,
+                            colors: {
+                              ...theme.colors,
 
+                              primary: "#fb923c",
+                            },
+                          })}
+                          isMulti
+                          // name="colors"
+                          options={usersEmails}
+                          className="basic-multi-select "
+                          classNamePrefix="select"
+                          value={selected}
+                          onChange={(selectedOption) => {
+                            handleClick(selectedOption, index);
+                          }}
+                        />
                         <div className="h-2 text-[#dc2626]">
                           {errors[item.inputname] && (
                             <span className="text-xs">
@@ -1282,84 +1312,58 @@ let response;
                           )}
                       </span>
                       <span>
-
-
-                      {item.type === "date" &&
+                        {item.type === "date" &&
                           item.inputname === "date" &&
                           item.field === "predefined" &&
-                  (() => {
-                    let date = new Date(item.value);
-                    const day = date.getUTCDate();
-                    const monthIndex = date.getUTCMonth();
-                    const year = date.getUTCFullYear();
+                          (() => {
+                            let date = new Date(item.value);
+                            const day = date.getUTCDate();
+                            const monthIndex = date.getUTCMonth();
+                            const year = date.getUTCFullYear();
 
-                    const monthAbbreviations = [
-                      "January",
-                      "February",
-                      "March",
-                      "April",
-                      "May",
-                      "June",
-                      "July",
-                      "August",
-                      "September",
-                      "October",
-                      "November",
-                      "December",
-                    ];
-                    let ordinalsText = "";
-                    if (day == 1 || day == 21 || day == 31) {
-                      ordinalsText = "st";
-                    } else if (day == 2 || day == 22) {
-                      ordinalsText = "nd";
-                    } else if (day == 3 || day == 23) {
-                      ordinalsText = "rd";
-                    } else {
-                      ordinalsText = "th";
-                    }
+                            const monthAbbreviations = [
+                              "January",
+                              "February",
+                              "March",
+                              "April",
+                              "May",
+                              "June",
+                              "July",
+                              "August",
+                              "September",
+                              "October",
+                              "November",
+                              "December",
+                            ];
+                            let ordinalsText = "";
+                            if (day == 1 || day == 21 || day == 31) {
+                              ordinalsText = "st";
+                            } else if (day == 2 || day == 22) {
+                              ordinalsText = "nd";
+                            } else if (day == 3 || day == 23) {
+                              ordinalsText = "rd";
+                            } else {
+                              ordinalsText = "th";
+                            }
 
-                     // Formatting the date
-              date = ` ${monthAbbreviations[monthIndex]} ${
-                day < 10 ? "0" : ""
-              }${day}${ordinalsText}, ${year}`;
-                    return (
-                      <div>
-
-
-                      {item.value ? (
-                        <p className="text-sm absolute bottom-2 right-2">
-                       Date : {date ? date : "No Date"}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-400 absolute bottom-2 right-2">
-                          Date:month date, year
-                        </p>
-                      )}
-                    </div>
-                  )
-                  })()}
-
-
-
-
-                        {/* {item.type === "date" &&
-                          item.inputname === "date" &&
-                          item.field === "predefined" && (
-                            <div>
-
-
-                              {item.value ? (
-                                <p className="text-sm absolute bottom-4 right-2">
-                                  {" "}
-                                  Date : {item.value}
-                                </p>
-                              ) : (
-                                <p className="text-sm text-gray-400 absolute bottom-4 right-2">
-                                  Date:dd/mm/yyy
-                                </p>
-                              )}
-                            </div>
-                          )} */}
+                            // Formatting the date
+                            date = ` ${monthAbbreviations[monthIndex]} ${
+                              day < 10 ? "0" : ""
+                            }${day}${ordinalsText}, ${year}`;
+                            return (
+                              <div>
+                                {item.value ? (
+                                  <p className="text-sm absolute bottom-2 right-2">
+                                    Date : {date ? date : "No Date"}
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-400 absolute bottom-2 right-2">
+                                    Date : month date, year
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })()}
                       </span>
                     </div>
                     {item.type === "textarea" &&

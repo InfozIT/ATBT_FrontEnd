@@ -36,7 +36,7 @@ const SubTasksList = ({
     }
   };
   return (
-    <div className="pb-3">
+    <div className="pb-3 ">
       <div className="flex justify-end pe-3">
         <button
           onClick={() => handleAddSubTask(task?.id)}
@@ -53,7 +53,7 @@ const SubTasksList = ({
           Add Subtask
         </button>
       </div>
-      <div>
+      <div className="overflow-auto">
         <table className="w-full">
           <thead></thead>
           <tbody>
@@ -316,7 +316,7 @@ const SubTasksList = ({
                         menuPlacement="auto"
                       />
                     </td>
-                    <td className="border py-1.5 px-2 text-sm  text-gray-600">
+                    <td className="border py-1.5 px-2 text-sm  text-gray-600" >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 20 20"

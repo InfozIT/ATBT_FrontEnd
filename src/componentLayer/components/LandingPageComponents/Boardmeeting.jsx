@@ -19,19 +19,19 @@ let parentPath
 export async function loader({ request, params }) {
   try {
     url = new URL(request.url);
+    console.log("url",url)
     if (params.boardmeetings === "userboardmeetings") {
       moduleName = "user";
       parentPath = "users"
     }
     if (params.boardmeetings === "entityboardmeetings") {
       moduleName = "entity";
+      parentPath = "entities"
     }
     const [meetings, entityList, roleList, meetingFormData] = await Promise.all(
       [
         atbtApi.get(
-          `boardmeeting/list?${moduleName}=${params.id}${
-            url?.search ? url?.search : ""
-          }`
+          `boardmeeting/list?${moduleName}=${params.id}${url && url.search ? '&' + url.search.substring(1) : ""}`
         ),
         atbtApi.post(`public/list/entity`),
         atbtApi.post(`public/list/role`),
@@ -78,10 +78,12 @@ function Boardmeeting() {
   let fetcher = useFetcher();
   const data = useLoaderData();
   const { meetings, tableViewData, fieldsDropDownData, customForm } = data;
+ 
   const [Qparams, setQParams] = useState({
     search: "",
     page: 1,
     pageSize: 10,
+  
   });
   useEffect(() => {
     debouncedParams(Qparams);
@@ -157,16 +159,10 @@ function Boardmeeting() {
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-col-3 gap-2 mt-2">
         <span className="col-span-1"> </span>
         <div className="col-span-1 text-start">
-          <label
-            for="default-search"
-            className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white"
-          >
-            Search
-          </label>
           <div className="relative">
-            <div className="absolute inset-y-0 start-0 flex items-center p-2 pointer-events-none">
+            <div className="absolute inset-y-0 start-0 flex items-center p-3 pointer-events-none">
               <svg
-                className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                className="w-3 h-3 text-gray-500 dark:text-gray-400"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -186,7 +182,7 @@ function Boardmeeting() {
               value={Qparams?.search}
               type="search"
               id="default-search"
-              className="block w-full px-4 py-2 ps-10 text-sm border-2 border-gray-200  rounded-2xl bg-gray-50  focus:outline-none "
+              className="block w-full px-4 py-2 ps-8 text-sm border-2 border-gray-200  rounded-2xl bg-gray-50  focus:outline-none placeholder:text-sm"
               placeholder="Search here..."
               required
             />
@@ -211,7 +207,8 @@ function Boardmeeting() {
               search: `?boardmeetingFor=${moduleName}&boardmeetingForID=${id}`,
             }}
           >
-            <button className=" px-1 inline-flex items-center justify-center  rounded-full  font-medium  gap-1 ">
+            
+            <button className=" px-1 py-2 inline-flex items-center justify-center  rounded-full  font-medium  gap-1 ">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
@@ -222,6 +219,9 @@ function Boardmeeting() {
               </svg>
               <span className="text-sm"> Create</span>
             </button>
+
+
+
           </Link>
         </div>
       </div>
@@ -480,8 +480,8 @@ function Boardmeeting() {
             ) : (
               <p className="text-sm text-gray-700">
                 Showing {meetings?.startMeeting} to {meetings?.endMeeting} of{" "}
-                <span className="font-medium">{meetings?.totalMeetings}</span>
-                <span className="font-medium"> </span> results
+                <span className="text-sm"> {meetings?.totalMeetings} </span>
+               results
               </p>
             )}
           </div>
@@ -527,9 +527,9 @@ function Boardmeeting() {
                 />
               </svg>
             </button>
-            <button className="border w-8 border-gray-300">
+            {/* <button className="border w-8 border-gray-300">
               {meetings?.currentPage}
-            </button>
+            </button> */}
             <button
               disabled={meetings?.currentPage === meetings?.totalPages}
               onClick={() => handlePage(meetings?.currentPage + 1)}

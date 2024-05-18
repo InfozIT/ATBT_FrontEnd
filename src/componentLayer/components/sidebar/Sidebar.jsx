@@ -1,10 +1,35 @@
 import React, { useEffect, useState } from "react";
 import logo from "../../../assets/Images/logo.png";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useMatches } from "react-router-dom";
 import GateKeeper from "../../../rbac/GateKeeper";
 const Sidebar = () => {
   const location = useLocation();
+  const matches = useMatches();
   console.log(location, "location");
+  console.log(matches, "matches");
+  useEffect(() => {
+    let updated = matches[1].pathname.split("/");
+    console.log("updated", updated);
+    if (updated[1] === "") {
+      setActive("Home");
+    } else if (updated[1] === "users") {
+      setActive("Users");
+    } else if (updated[1] === "entities") {
+      setActive("Entities");
+    } else if (updated[1] === "teams") {
+      setActive("Teams");
+    } else if (updated[1] === "boardmeetings") {
+      setActive("Board Meetings");
+    } else if (updated[1] === "tasks") {
+      setActive("Tasks");
+    } else if (updated[1] === "reports") {
+      setActive("Reports");
+    } else if (updated[1] === "tasks") {
+      setActive("Tasks");
+    } else if (updated[1] === "settings") {
+      setActive("Settings");
+    }
+  }, [matches]);
   const menus = [
     {
       name: "Users",
@@ -148,17 +173,17 @@ const Sidebar = () => {
 
   return (
     <div className="sidebar">
-      <main className="bg-white">
+      <main className={`bg-white ${
+            open ? "w-52" : "w-16"
+          }   duration-500`}>
         <div
-          className={`bg-white min-h-screen ${
-            open ? "w-60" : "w-16"
-          } duration-500 text-gray-100 px-2 relative`}
+          className={` min-h-screen duration-500 text-gray-100 px-2 relative`}
         >
           <div className="pt-3 flex justify-between">
             <img
               src={logo}
               alt="Infoz IT"
-              className={`w-28 h-10 ms-8 p-0 ${open ? "" : "hidden"}`}
+              className={`w-28 h-10 ms-6 p-0 ${open ? "" : "hidden"}`}
             />
             <svg
               xmlns="http://www.w3.org/2000/svg"
