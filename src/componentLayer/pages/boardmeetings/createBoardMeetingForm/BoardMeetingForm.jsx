@@ -67,6 +67,7 @@ function BoardMeetingForm() {
   const [showPassword, setShowPassword] = useState(false);
   document.title = "ATBT | Meeting";
   let { id } = useParams();
+  console.log(id , "bhavithabhavi")
   const boardmeeting = useLoaderData();
   console.log(boardmeeting, "cmp loader data");
   useEffect(() => {
@@ -575,7 +576,6 @@ function BoardMeetingForm() {
               customFormFields.map((item, index) => (
                 <div key={index}>
                   {/* predefined fields */}
-
                   {item.type === "number" &&
                     item.inputname == "meetingnumber" &&
                     item.field == "predefined" && (
@@ -633,9 +633,11 @@ function BoardMeetingForm() {
                           type="date"
                           name={item.inputname}
                           id={item.inputname}
-                          style={{ fontSize: "0.8rem" }}
-                          min={id ? "" : getCurrentDate()}
-                          // placeholder="bhavi"
+                          style={{
+                            fontSize: "0.8rem",
+                            WebkitAppearance: "none",
+                          }}
+                          min={ getCurrentDate()}
                           className="px-2 py-2 text-sm block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400 placeholder:text-xs"
                           value={customFormFields[index].value || ""}
                           onChange={(e) => handleChange(index, e.target.value)}
@@ -1305,7 +1307,7 @@ function BoardMeetingForm() {
                                 <p className="text-lg">{item.value}</p>
                               ) : (
                                 <p className="text-lg text-gray-400">
-                                  Board Meeting Number
+                                  Meeting ID
                                 </p>
                               )}
                             </div>

@@ -50,7 +50,7 @@ export async function loader({ request, params }) {
       threadName: "BoardMeetings",
       threadPath: `/${parentPath}/${params.id}/${params.boardmeetings}`,
     };
-    console.log(combinedResponse, "entities response", request, params);
+    console.log(combinedResponse, "board meeting response");
     return combinedResponse;
   } catch (error) {
     console.error("Error occurred:", error);
@@ -219,9 +219,6 @@ function Boardmeeting() {
               </svg>
               <span className="text-sm"> Create</span>
             </button>
-
-
-
           </Link>
         </div>
       </div>
@@ -255,7 +252,13 @@ function Boardmeeting() {
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
                 >
-                  Upcoming Tasks
+                To-Do Tasks
+                </th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                >
+                  In-Progress Tasks
                 </th>
                 <th
                   scope="col"
@@ -353,28 +356,36 @@ function Boardmeeting() {
                       style={{ maxWidth: "160px" }}
                       title=""
                     >
-                      <p className="truncate text-xs"> 5000</p>
+             
+                      <p className="truncate text-xs">          {row.taskCounts.totalTaskCount}</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
                       style={{ maxWidth: "160px" }}
                       title=""
                     >
-                      <p className="truncate text-xs"> 2000</p>
+                      <p className="truncate text-xs">          {row.taskCounts.completedCount}</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
                       style={{ maxWidth: "160px" }}
                       title=""
                     >
-                      <p className="truncate text-xs"> 1000</p>
+                      <p className="truncate text-xs">          {row.taskCounts.toDoCount}</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
                       style={{ maxWidth: "160px" }}
                       title=""
                     >
-                      <p className="truncate text-xs"> 500</p>
+                      <p className="truncate text-xs">          {row.taskCounts.inProgressCount}</p>
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
+                      style={{ maxWidth: "160px" }}
+                      title=""
+                    >
+                      <p className="truncate text-xs">          {row.taskCounts.overDueCount}</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
@@ -445,13 +456,13 @@ function Boardmeeting() {
                           <button
                             type="button"
                             onClick={() => handleDeleteUser(row.id)}
-                            className=" inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg  text-[#475569] hover:text-orange-500 disabled:opacity-50 disabled:pointer-events-none  dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600"
+                            className=" inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg  text-[#475569] hover:text-orange-500 disabled:opacity-50 disabled:pointer-events-none  dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600 cursor-pointer"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 20 20"
                               fill="currentColor"
-                              className="w-4 h-4"
+                              className="w-4 h-4 "
                             >
                               <path
                                 fill-rule="evenodd"
