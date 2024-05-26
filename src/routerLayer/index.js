@@ -27,21 +27,41 @@ export const router = createBrowserRouter([
         path: "users",
         children: [...userRouter],
         handle: {
-          crumb: () => <Link to="/users">Users</Link>,
+          crumb: () => <Link  
+          
+          to={{
+            pathname: "/users",
+            search:`?search=&page=1&pageSize=10`,
+          }}
+          
+          >Users</Link>,
         },
       },
       {
         path: "entities",
         children: [...entityRouter],
         handle: {
-          crumb: () => <Link to="/entities">Entities</Link>,
+          crumb: () => <Link 
+          to={{
+            pathname: "/entities",
+            search:`?search=&page=1&pageSize=10`,
+          }}
+          
+          >Entities</Link>,
         },
       },
       {
         path: "teams",
         children: [...teamRouter],
         handle: {
-          crumb: () => <Link to="/teams">Teams</Link>,
+          crumb: () => <Link  
+
+          to={{
+            pathname: "/teams",
+            search:`?search=&page=1&pageSize=10`,
+          }}
+          
+          >Teams</Link>,
         },
       },
       {

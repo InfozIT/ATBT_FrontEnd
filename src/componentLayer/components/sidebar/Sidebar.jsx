@@ -85,7 +85,7 @@ const Sidebar = () => {
       module: "team",
     },
     {
-      name: "Board Meetings",
+      name: "Meetings",
       link: "/boardmeetings",
       icon: (
         <svg
@@ -260,7 +260,7 @@ const Sidebar = () => {
                   to={{
                     pathname: menu?.link,
                     search:
-                      location?.state?.from === menu?.link
+                      location?.pathname === menu?.link
                         ? location.search
                         : `?search=&page=1&pageSize=10`,
                   }}

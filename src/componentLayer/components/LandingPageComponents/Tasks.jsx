@@ -18,20 +18,18 @@ let status = [
   { label: "In-Progress", value: "In-Progress" },
   { label: "Completed", value: "Completed" },
 ];
-let moduleName;
+
 let parentPath;
 let groupName;
 let idOF;
 export async function tasksLoader({ request, params }) {
   try {
     if (params.boardmeetings === "userboardmeetings") {
-      moduleName = "user";
       parentPath = "users";
       groupName = "groupUser";
       idOF = "userId";
     }
     if (params.boardmeetings === "entityboardmeetings") {
-      moduleName = "entity";
       parentPath = "entities";
       groupName = "groupEntity";
       idOF = "entityId";
@@ -91,7 +89,7 @@ export async function tasksLoader({ request, params }) {
         label: user.name,
         value: user.id,
       })),
-      threadName: params.BMid ? ` Board Meetings Tasks` : "User Tasks",
+      threadName: params.BMid ? ` Board Meetings Tasks` :`Tasks`,
       threadPath: params.BMid
         ? `/${parentPath}/${params.id}/${params.boardmeetings}/${params.BMid}/tasks`
         : `/${parentPath}/${params.id}/tasks`,
@@ -115,22 +113,13 @@ export async function TasksActions({ request, params }) {
       {
         const requestBody = (await request.json()) || null;
         console.log(requestBody, "request");
-        let moduleName;
-        if (params.boardmeetings === "userboardmeetings") {
-          moduleName = "users";
-        }
-        if (params.boardmeetings === "entityboardmeetings") {
-          moduleName = "entity";
-        }
-        if (params.boardmeetings === "teamboardmeetings") {
-          moduleName = "team";
-        }
+       
         if (requestBody.type === "ADD_NEW_TASK") {
           return await atbtApi.post(
             `task/add/${params.BMid}`,
 
             {
-              taskCreatedBy: { name: moduleName, id: params.id },
+              taskCreatedBy: { name: parentPath, id: params.id },
               collaborators: [
                 parseInt(JSON.parse(localStorage.getItem("data")).user.id),
               ],
@@ -200,6 +189,7 @@ export async function TasksActions({ request, params }) {
   }
 }
 const Tasks = ({ NameModule, tasksWithBm }) => {
+  parentPath= NameModule
   let submit = useSubmit();
   const data = useLoaderData();
   let [tasks, setTasks] = useState([]);
@@ -216,9 +206,13 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
 
   let fetcher = useFetcher();
   const { id, BMid } = useParams();
-  const [Qparams, setQParams] = useState({
-    //  taskID:null
-    status: "To-Do",
+  const [Qparams, setQParams] = useState(() => {
+    // Initialize the state object conditionally
+    const initialState = {};
+    if (!BMid) {
+      initialState.status = "To-Do";
+    }
+    return initialState;
   });
   useEffect(() => {
     debouncedParams(Qparams);
@@ -382,7 +376,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
       <div className="flex justify-end">
         {BMid && (
           <button
-            className=" ms-2  mt-1 inline-flex items-center  whitespace-nowrap rounded-2xl text-sm font-medium  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50  text-orange-foreground shadow hover:bg-orange/90 h-9 px-3 py-1 shrink-0 bg-orange-600 text-white gap-1"
+            className=" ms-2  mt-3 inline-flex items-center  whitespace-nowrap rounded-2xl text-sm font-medium  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50  text-orange-foreground shadow hover:bg-orange/90 h-9 px-3 py-1 shrink-0 bg-orange-600 text-white gap-1"
             onClick={handleAddNewTask}
           >
             <svg
@@ -410,7 +404,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
               }`}
               onClick={() => handleNavLinkClick("toDo")}
             >
-              To do
+              To-Do
             </NavLink>
           )}
           {!BMid && (
@@ -424,7 +418,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
               }`}
               onClick={() => handleNavLinkClick("inProgress")}
             >
-              In-progress
+              In-Progress
             </NavLink>
           )}
 
@@ -439,7 +433,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
               }`}
               onClick={() => handleNavLinkClick("OverDue")}
             >
-              OverDue
+              Overdue
             </NavLink>
           )}
           {!BMid && (
@@ -490,13 +484,13 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                 Due Date
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10">
-                Status
+               Decision Status
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 ">
-                Updated By User
+               Decision Updated of User
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
-                Updated by Admin
+              Decision Updated of Admin
               </th>
               {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Actions
@@ -507,6 +501,10 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
             {tasks?.map((task, index) => {
               const decisionHeight =
                 task?.decision === null || task?.decision === "" ? "2rem" : "";
+              let   members = task?.group.map((user) => ({
+                  label: user.name,
+                  value: user.id,
+                }))
               return (
                 <tr key={task.id} className="border-b border-gray-200">
                   <td className="border py-1.5 px-2">
@@ -689,7 +687,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                   <td
                     className="border py-1.5 px-2"
                     title={task?.status}
-                    style={{ width: "6.5rem" }}
+                  
                   >
                     <Select
                       options={status}

@@ -6,13 +6,13 @@ import { UserDataContext } from "../../../../contexts/usersDataContext/usersData
 import { TeamsDataContext } from "../../../../contexts/teamsDataContext/teamsDataContext";
 import { useNavigate, useLoaderData, useParams } from "react-router-dom";
 import atbtApi from "../../../../serviceLayer/interceptor";
+import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
 
 const userData = JSON.parse(localStorage.getItem("data"));
 let createdBy = userData?.user?.id;
 const token = userData?.token;
 const role = userData?.role?.name;
 export async function teamFormLoader({ params }) {
-  console.log("hi hello");
   try {
     const [formResponse, teamResponse, usersList] = await Promise.all([
       atbtApi.get(`form/list?name=teamform`),
@@ -24,9 +24,15 @@ export async function teamFormLoader({ params }) {
       console.log(teamResponse, "loader team data");
       teamData = teamResponse?.data;
     }
+    console.log(teamData,"teamData")
     const formData = formResponse.data.Data;
-    console.log("formData", formData, "teamData", teamData);
-    return { teamData, formData, usersList };
+    if (userData) {
+      let threadName = teamData?.name;
+      let threadPath = `/teams/${params.id}/edit`;
+      return { teamData, formData, usersList,threadName,threadPath };
+    } else {
+      return { teamData, formData, usersList };
+    }
   } catch (error) {
     if (error.response) {
       throw new Error(`Failed to fetch data: ${error.response.status}`);
@@ -486,7 +492,7 @@ function TeamsForm() {
   // end the time function
   return (
     <div className="container p-4 bg-[#f8fafc]">
-      <p className="text-lg font-semibold">Team Form</p>
+    <p className="text-lg font-semibold"><BreadCrumbs/></p>
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-3  gap-4 mt-2 ">
         <div className="col-span-1 ">
           <form className=" " method="POST" onSubmit={handleFormSubmit}>
@@ -515,7 +521,7 @@ function TeamsForm() {
                           type="text"
                           name={item.inputname}
                           id={item.inputname}
-                          placeholder="Enter team name"
+                          placeholder="Enter Full Name"
                           value={customFormFields[index].value || ""}
                           className="px-2 py-2 text-sm block w-full rounded-md bg-gray-50 border border-gray-300 text-gray-900 focus:outline-none focus:border-orange-400 placeholder:text-xs"
                           onChange={(e) => handleChange(index, e.target.value)}

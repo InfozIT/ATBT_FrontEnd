@@ -12,7 +12,8 @@ import { debounce, caseLetter } from "../../../../utils/utils";
 import CustomColumn from "../../../../componentLayer/components/tableCustomization/CustomColumn";
 import CustomFilter from "../../../../componentLayer/components/tableCustomization/CustomFilter";
 import atbtApi from "../../../../serviceLayer/interceptor";
-export async function loader({ request, params }) {
+import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
+export async function TeamsLoader({ request, params }) {
   try {
     let url = new URL(request.url);
     const [teams, teamFormData] = await Promise.all([
@@ -32,7 +33,7 @@ export async function loader({ request, params }) {
     throw error;
   }
 }
-export async function action({ request, params }) {
+export async function TeamsAction({ request, params }) {
   switch (request.method) {
     case "DELETE": {
       const id = (await request.json()) || null;
@@ -84,6 +85,7 @@ function Teams() {
     console.log(selectedValue, "sv");
     setQParams({
       ...Qparams,
+      page:1,
       pageSize: selectedValue,
     });
   };
@@ -143,7 +145,8 @@ function Teams() {
       {/* search & filter */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-col-3 gap-2 mt-2 items-center">
         <h1 className="font-semibold text-lg grid1-item">
-          Teams {teams.loading ? "..." : null}
+          {/* Teams {teams.loading ? "..." : null} */}
+          <BreadCrumbs />
         </h1>
         <div className="grid1-item text-start">
           <div className="relative">
@@ -204,7 +207,7 @@ function Teams() {
                     {tableView[key].label}
                   </th>
                 ))}
-                <th
+                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
                 >
@@ -214,19 +217,25 @@ function Teams() {
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
                 >
-                  Completed Tasks
+                  To-Do Tasks
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
                 >
-                  Upcoming Tasks
+                  In-Progress Tasks
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
                 >
                   Overdue Tasks
+                </th>
+                <th
+                  scope="col"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                >
+                  Completed Tasks
                 </th>
                 <th
                   scope="col"
@@ -291,7 +300,12 @@ function Teams() {
                                 permission.canRead
                               }
                             >
-                              <Link to={`${row.id}/team/boardmeetings`}>
+                              <Link 
+                               to={{
+                                pathname: `${row.id}/teamboardmeetings`,
+                                search: `?search=&page=1&pageSize=10`,
+                              }}
+                              >
                                 <p className="truncate text-xs"> {value}</p>
                               </Link>
                             </GateKeeper>{" "}
@@ -327,21 +341,28 @@ function Teams() {
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
-                      style={{ width: "9rem" }}
+                      
                       title=""
                     >
                       <p className="truncate text-xs"> 1000</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
-                      style={{ width: "9rem" }}
+                      
                       title=""
                     >
                       <p className="truncate text-xs"> 500</p>
                     </td>
                     <td
                       className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
-                      style={{ width: "8.375rem" }}
+                      
+                      title=""
+                    >
+                      <p className="truncate text-xs"> 500</p>
+                    </td>
+                    <td
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
+                      style={{ width: "8rem" }}
                       title=""
                     >
                       <div className="flex justify-start gap-4">
