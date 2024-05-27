@@ -186,7 +186,7 @@ function BoardMeetings() {
         </div>
       </div>
       {/* table */}
-      <div className="max-h-[457px] overflow-y-scroll mt-5">
+      <div className="max-h-[457px] overflow-y-auto mt-5">
         {visibleColumns && tableView && meetings?.Meetings && (
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
             <thead>
@@ -465,7 +465,7 @@ function BoardMeetings() {
             <select
               value={Qparams?.pageSize}
               onChange={handlePerPageChange}
-              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500"
+              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500 cursor-pointer"
             >
               <option value="10">10</option>
               <option value="25">25</option>

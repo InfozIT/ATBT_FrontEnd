@@ -28,6 +28,10 @@ export async function loader({ request, params }) {
       moduleName = "entity";
       parentPath = "entities";
     }
+    if (params.boardmeetings === "teamboardmeetings") {
+      moduleName = "team";
+      parentPath = "teams";
+    }
     const [meetings, entityList, roleList, meetingFormData] = await Promise.all(
       [
         atbtApi.get(
@@ -155,7 +159,7 @@ function Boardmeeting() {
   }, [tableView]);
   const [selectedFilters, setSelectedFilters] = useState({});
   return (
-    <div className="overflow-x-auto p-3">
+    <div className="overflow-x-auto p-3 w-full">
       {/* search & filter */}
       <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-col-3 gap-2 mt-2">
         <span className="col-span-1"> </span>
@@ -201,25 +205,32 @@ function Boardmeeting() {
             setQParams={setQParams}
             customForm={customForm}
           />
-          <Link
-            className=" px-1 inline-flex items-center  whitespace-nowrap rounded-full  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-primary-foreground  hover:bg-primary/90 shrink-0 text-white  "
-            to={{
-              pathname: "/boardmeetings/new",
-              search: `?boardmeetingFor=${moduleName}&boardmeetingForID=${id}`,
-            }}
+
+          <GateKeeper
+            permissionCheck={(permission) =>
+              permission.module === "meeting" && permission.canCreate
+            }
           >
-            <button className=" px-1 py-2 inline-flex items-center justify-center  rounded-full  font-medium  gap-1 ">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="w-5 h-5 "
-              >
-                <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-              </svg>
-              <span className="text-sm"> Create</span>
-            </button>
-          </Link>
+            <Link
+              className=" px-1 inline-flex items-center  whitespace-nowrap rounded-full  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-primary-foreground  hover:bg-primary/90 shrink-0 text-white  "
+              to={{
+                pathname: "/boardmeetings/new",
+                search: `?boardmeetingFor=${moduleName}&boardmeetingForID=${id}`,
+              }}
+            >
+              <button className=" px-1 py-2 inline-flex items-center justify-center  rounded-full  font-medium  gap-1 ">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-5 h-5 "
+                >
+                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                </svg>
+                <span className="text-sm"> Create</span>
+              </button>
+            </Link>
+          </GateKeeper>
         </div>
       </div>
       {/* table */}
@@ -231,44 +242,44 @@ function Boardmeeting() {
                 {visibleColumns.map((key) => (
                   <th
                     key={key}
-                    className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                    className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                   >
                     {tableView[key].label}
                   </th>
                 ))}
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
                   Total Tasks
                 </th>
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
                   To-Do Tasks
                 </th>
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
                   In-Progress Tasks
                 </th>
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
                   Overdue Tasks
                 </th>
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                   Completed Tasks
+                  Completed Tasks
                 </th>
                 <th
                   scope="col"
-                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+                  className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
                   Actions
                 </th>
@@ -328,7 +339,7 @@ function Boardmeeting() {
                           >
                             <GateKeeper
                               permissionCheck={(permission) =>
-                                permission.module === "meeting" &&
+                                permission.module === "task" &&
                                 permission.canRead
                               }
                             >
@@ -384,7 +395,7 @@ function Boardmeeting() {
                       title=""
                     >
                       <p className="truncate text-xs">
-                      {row.taskCounts.overDueCount}
+                        {row.taskCounts.overDueCount}
                       </p>
                     </td>
                     <td
@@ -393,7 +404,6 @@ function Boardmeeting() {
                       title=""
                     >
                       <p className="truncate text-xs">
-                       
                         {row.taskCounts.completedCount}
                       </p>
                     </td>
@@ -501,7 +511,8 @@ function Boardmeeting() {
             ) : (
               <p className="text-sm text-gray-700">
                 Showing {meetings?.startMeeting} to {meetings?.endMeeting} of
-                <span className="text-sm"> {meetings?.totalMeetings} </span></p>
+                <span className="text-sm"> {meetings?.totalMeetings} </span>
+              </p>
             )}
           </div>
           <section
@@ -511,7 +522,7 @@ function Boardmeeting() {
             <select
               value={Qparams?.pageSize}
               onChange={handlePerPageChange}
-              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500"
+              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500 cursor-pointer"
             >
               <option value="10">10</option>
               <option value="25">25</option>

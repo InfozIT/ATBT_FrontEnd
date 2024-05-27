@@ -3,6 +3,7 @@ import {
   Link,
   useFetcher,
   useLoaderData,
+  useLocation,
   useNavigation,
   useSubmit,
 } from "react-router-dom";
@@ -17,6 +18,7 @@ import CustomFilter from "../../../../componentLayer/components/tableCustomizati
 import atbtApi from "../../../../serviceLayer/interceptor";
 import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
 const userData = JSON.parse(localStorage.getItem("data"));
+let permissions = userData?.role?.Permissions
 const userId = userData?.user?.id;
 const role = userData?.role?.name;
 export async function loader({ request, params }) {
@@ -70,6 +72,8 @@ export async function action({ request, params }) {
   }
 }
 function Users() {
+  let location  = useLocation()
+  console.log("loctoion",location)
   document.title = "ATBT | User";
   const navigation = useNavigation();
   let submit = useSubmit();
@@ -272,7 +276,7 @@ function Users() {
         </div>
       </div>
       {/* table */}
-      <div className="max-h-[510px] overflow-y-scroll mt-5">
+      <div className="max-h-[510px] overflow-y-auto mt-5">
         {visibleColumns && tableView && users?.users && (
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
             <thead>
@@ -339,20 +343,24 @@ function Users() {
                       }
 
                       if (key === "name") {
+                       
+let meetingPermission = permissions.find((permission=>permission.module ==="meeting"))
+
                         return (
                           <td
                             key={key}
-                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  hover:text-orange-500 overflow-hidden`}
+                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                             style={{ maxWidth: "12rem" }}
                             title={row[key]}
                           >
-                            <GateKeeper
+                           {meetingPermission?.canRead ? <GateKeeper
                               permissionCheck={(permission) =>
-                                permission.module === "user" &&
+                                permission.module === "meeting" &&
                                 permission.canRead
                               }
                             >
                               <Link
+                              className="hover:text-orange-500"
                                 to={{
                                   pathname: `${row.id}/userboardmeetings`,
                                   search: `?search=&page=1&pageSize=10`,
@@ -360,7 +368,9 @@ function Users() {
                               >
                                 <p className="truncate text-xs"> {value}</p>
                               </Link>
-                            </GateKeeper>
+                            </GateKeeper> :   <p className="truncate text-xs"> {value}</p> }
+                           
+                            
                           </td>
                         );
                       } else if (key === "entityname") {
@@ -416,7 +426,7 @@ function Users() {
                       <div className="flex justify-center gap-4">
                         <GateKeeper
                           permissionCheck={(permission) =>
-                            permission.module === "user" && permission.canCreate
+                            permission.module === "user" && permission.canRead
                           }
                         >
                           <button
@@ -466,7 +476,7 @@ function Users() {
                         </GateKeeper>
                         <GateKeeper
                           permissionCheck={(permission) =>
-                            permission.module === "user" && permission.canUpdate
+                            permission.module === "user" && permission.canDelete
                           }
                         >
                           {
@@ -650,7 +660,7 @@ function Users() {
             <select
               value={Qparams?.pageSize}
               onChange={handlePerPageChange}
-              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500"
+              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500 cursor-pointer"
             >
               <option value="10">10</option>
               <option value="25">25</option>
@@ -660,7 +670,7 @@ function Users() {
               <option value="500">500</option>
             </select>
             {/* previos button */}
-            <button
+            <button 
               disabled={
                 navigation?.state === "loading"
                   ? true

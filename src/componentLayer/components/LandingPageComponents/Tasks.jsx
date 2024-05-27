@@ -12,6 +12,7 @@ import atbtApi from "../../../serviceLayer/interceptor";
 import { debounce } from "../../../utils/utils";
 import subtask_icon from "../../../assets/Images/Subtask_icon.svg";
 import "react-datepicker/dist/react-datepicker.css";
+import GateKeeper from "../../../rbac/GateKeeper";
 let members;
 let status = [
   { label: "To-Do", value: "To-Do" },
@@ -24,17 +25,24 @@ let groupName;
 let idOF;
 export async function tasksLoader({ request, params }) {
   try {
-    if (params.boardmeetings === "userboardmeetings") {
+    const url = new URL(request.url);
+
+    if (url.pathname.split("/")[1] === "users") {
       parentPath = "users";
       groupName = "groupUser";
       idOF = "userId";
     }
-    if (params.boardmeetings === "entityboardmeetings") {
+    if (url.pathname.split("/")[1] === "entities") {
       parentPath = "entities";
       groupName = "groupEntity";
       idOF = "entityId";
     }
-    const url = new URL(request.url);
+    if (url.pathname.split("/")[1] === "teams") {
+      parentPath = "teams";
+      groupName = "groupTeam";
+      idOF = "teamId";
+    }
+    console.log("url", url.pathname.split("/")[1]);
     const taskID = url.searchParams.get("taskID");
     const subTaskID = url.searchParams.get("subTaskID");
     const statusType = url.searchParams.get("status");
@@ -89,7 +97,7 @@ export async function tasksLoader({ request, params }) {
         label: user.name,
         value: user.id,
       })),
-      threadName: params.BMid ? ` Board Meetings Tasks` :`Tasks`,
+      threadName: params.BMid ? ` Board Meetings Tasks` : `Tasks`,
       threadPath: params.BMid
         ? `/${parentPath}/${params.id}/${params.boardmeetings}/${params.BMid}/tasks`
         : `/${parentPath}/${params.id}/tasks`,
@@ -113,7 +121,7 @@ export async function TasksActions({ request, params }) {
       {
         const requestBody = (await request.json()) || null;
         console.log(requestBody, "request");
-       
+
         if (requestBody.type === "ADD_NEW_TASK") {
           return await atbtApi.post(
             `task/add/${params.BMid}`,
@@ -188,8 +196,7 @@ export async function TasksActions({ request, params }) {
     }
   }
 }
-const Tasks = ({ NameModule, tasksWithBm }) => {
-  parentPath= NameModule
+const Tasks = () => {
   let submit = useSubmit();
   const data = useLoaderData();
   let [tasks, setTasks] = useState([]);
@@ -358,44 +365,50 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
   const handleNavLinkClick = (link) => {
     setActiveLink(link);
   };
-    // for previous dates defult
-    const getCurrentDate = () => {
-      const today = new Date();
-      const year = today.getFullYear();
-      let month = today.getMonth() + 1;
-      let day = today.getDate();
-  
-      month = month < 10 ? `0${month}` : month;
-      day = day < 10 ? `0${day}` : day;
-  
-      return `${year}-${month}-${day}`;
-    };
+  // for previous dates defult
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    let month = today.getMonth() + 1;
+    let day = today.getDate();
+
+    month = month < 10 ? `0${month}` : month;
+    day = day < 10 ? `0${day}` : day;
+
+    return `${year}-${month}-${day}`;
+  };
 
   return (
     <div className="">
       <div className="flex justify-end">
         {BMid && (
-          <button
-            className=" ms-2  mt-3 inline-flex items-center  whitespace-nowrap rounded-2xl text-sm font-medium  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50  text-orange-foreground shadow hover:bg-orange/90 h-9 px-3 py-1 shrink-0 bg-orange-600 text-white gap-1"
-            onClick={handleAddNewTask}
+          <GateKeeper         
+             permissionCheck={(permission) =>
+              permission.module === "task" && permission.canCreate
+            }
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-5 h-5"
+            <button
+              className=" ms-2  mt-3 inline-flex items-center  whitespace-nowrap rounded-2xl text-sm font-medium  transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50  text-orange-foreground shadow hover:bg-orange/90 h-9 px-3 py-1 shrink-0 bg-orange-600 text-white gap-1"
+              onClick={handleAddNewTask}
             >
-              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-            </svg>
-            Add Task
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-5 h-5"
+              >
+                <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+              </svg>
+              Add Task
+            </button>
+          </GateKeeper>
         )}
       </div>
       <div>
         <div className="flex overflow-x-auto my-2">
           {!BMid && (
             <NavLink
-              to={`/${NameModule}/${id}/tasks?status=To-Do`}
+              to={`/${parentPath}/${id}/tasks?status=To-Do`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "toDo"
@@ -409,7 +422,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
           )}
           {!BMid && (
             <NavLink
-              to={`/${NameModule}/${id}/tasks?status=In-Progress`}
+              to={`/${parentPath}/${id}/tasks?status=In-Progress`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "inProgress"
@@ -424,7 +437,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
 
           {!BMid && (
             <NavLink
-              to={`/${NameModule}/${id}/tasks?status=Over-Due`}
+              to={`/${parentPath}/${id}/tasks?status=Over-Due`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "OverDue"
@@ -438,7 +451,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
           )}
           {!BMid && (
             <NavLink
-              to={`/${NameModule}/${id}/tasks?status=Completed`}
+              to={`/${parentPath}/${id}/tasks?status=Completed`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Completed"
@@ -452,7 +465,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
           )}
           {!BMid && (
             <NavLink
-              to={`/${NameModule}/${id}/tasks`}
+              to={`/${parentPath}/${id}/tasks`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Master" ? "border-b-2 border-orange-600" : ""
@@ -464,8 +477,8 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
           )}
         </div>
       </div>
-      <div className=" max-h-[410px] overflow-y-auto">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
+      <div className=" max-h-[410px] overflow-y-auto ">
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md table ">
           <thead>
             <tr>
               <th
@@ -474,7 +487,10 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
               >
                 Decision Taken
               </th>
-              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10">
+              <th
+                className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10"
+                style={{ width: "13rem" }}
+              >
                 Person Responsible
               </th>
               <th
@@ -484,13 +500,13 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                 Due Date
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10">
-               Decision Status
+                Decision Status
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 ">
-               Decision Updated of User
+                Decision Updated of User
               </th>
               <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
-              Decision Updated of Admin
+                Decision Updated of Admin
               </th>
               {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Actions
@@ -501,12 +517,12 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
             {tasks?.map((task, index) => {
               const decisionHeight =
                 task?.decision === null || task?.decision === "" ? "2rem" : "";
-              let   members = task?.group.map((user) => ({
-                  label: user.name,
-                  value: user.id,
-                }))
+              let members = task?.group.map((user) => ({
+                label: user.name,
+                value: user.id,
+              }));
               return (
-                <tr key={task.id} className="border-b border-gray-200">
+                <tr key={task.id} className="border-b border-gray-200 ">
                   <td className="border py-1.5 px-2">
                     <div className="flex items-center justify-between">
                       {isInputActiveID === task.id && (
@@ -585,6 +601,14 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                     <Select
                       options={members}
                       menuPortalTarget={document.body}
+                      closeMenuOnScroll={(e) => {
+                        // Check if the scroll event originated from within the table
+                        if (e.target.closest("table")) {
+                          return true; // Close the menu when scrolling the table
+                        } else {
+                          return false; // Don't close the menu for other scroll events
+                        }
+                      }}
                       styles={{
                         control: (provided, state) => ({
                           ...provided,
@@ -609,6 +633,7 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                           "&:focus-within": {
                             borderColor: "#fb923c",
                           },
+                          width: "13rem",
                         }),
 
                         option: (provided, state) => ({
@@ -677,18 +702,14 @@ const Tasks = ({ NameModule, tasksWithBm }) => {
                         fontSize: "0.8rem",
                         WebkitAppearance: "none",
                       }}
-                      min={ getCurrentDate()}
+                      min={getCurrentDate()}
                       onChange={(e) => {
                         handleSubmit(task?.id, "dueDate", e.target.value);
                         handleTaskChange(index, "dueDate", e.target.value);
                       }}
                     />
                   </td>
-                  <td
-                    className="border py-1.5 px-2"
-                    title={task?.status}
-                  
-                  >
+                  <td className="border py-1.5 px-2" title={task?.status}>
                     <Select
                       options={status}
                       menuPortalTarget={document.body}

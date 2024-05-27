@@ -11,7 +11,7 @@ import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
 const TeamsLandingPage = () => {
   const { id, BMid } = useParams();
   return (
-    <div className="container p-4 bg-[#f8fafc]">
+    <div className=" p-4 bg-[#f8fafc]">
       <div className="flex justify-between my-2">
         <p className="text-xl font-semibold">
           <BreadCrumbs />
@@ -33,7 +33,7 @@ const TeamsLandingPage = () => {
                 : "cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09]"
             }
           >
-            Board Meetings
+            Team Meetings
           </NavLink>
         )}
         {BMid && (
@@ -52,7 +52,7 @@ const TeamsLandingPage = () => {
                 : "cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09]"
             }
           >
-            Board Meetings Tasks
+          Meetings Tasks
           </NavLink>
         )}{" "}
         {!BMid && (

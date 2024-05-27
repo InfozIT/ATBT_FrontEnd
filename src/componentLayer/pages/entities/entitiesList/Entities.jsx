@@ -14,6 +14,8 @@ import atbtApi from "../../../../serviceLayer/interceptor";
 import CustomColumn from "../../../components/tableCustomization/CustomColumn";
 import CustomFilter from "../../../components/tableCustomization/CustomFilter";
 import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
+const userData = JSON.parse(localStorage.getItem("data"));
+let permissions = userData?.role?.Permissions
 export async function loader({ request, params }) {
   try {
     let url = new URL(request.url);
@@ -114,28 +116,48 @@ function Entities() {
     }
   }, [fetcher, navigation]);
   const handleDeleteUser = async (id) => {
-    const confirmDelete = await Swal.fire({
-      title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this Entity!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ea580c",
-      cancelButtonColor: "#fff",
-      confirmButtonText: "Delete",
-      customClass: {
-        popup: "custom-swal2-popup",
-        title: "custom-swal2-title",
-        content: "custom-swal2-content",
-      },
-    });
-    if (confirmDelete.isConfirmed) {
-      try {
-        // const result = await deleteEntitybyId(id);
-        fetcher.submit(id, { method: "DELETE", encType: "application/json" });
-      } catch (error) {
-        Swal.fire("Error", "Unable to delete entity 🤯", "error");
+    let entityUsers = await  atbtApi.post(`entity/User/list/${id}`);
+    if(entityUsers?.data.length === 0 ){
+      const confirmDelete = await Swal.fire({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this Entity!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ea580c",
+        cancelButtonColor: "#fff",
+        confirmButtonText: "Delete",
+        customClass: {
+          popup: "custom-swal2-popup",
+          title: "custom-swal2-title",
+          content: "custom-swal2-content",
+        },
+      });
+      if (confirmDelete.isConfirmed) {
+        try {
+          // const result = await deleteEntitybyId(id);
+          fetcher.submit(id, { method: "DELETE", encType: "application/json" });
+        } catch (error) {
+          Swal.fire("Error", "Unable to delete entity 🤯", "error");
+        }
       }
     }
+    else{
+      const confirmDelete = await Swal.fire({
+        title: "Entity can't be deleted",
+        text: `You cannot delete entity because there are ${entityUsers?.data.length} users(${entityUsers?.data.map((user)=>user.name).join(", ")}) are present`,
+        icon: "warning",
+        showCancelButton: false,
+        confirmButtonColor: "#ea580c",
+        cancelButtonColor: "#fff",
+        confirmButtonText: "Ok",
+        customClass: {
+          popup: "custom-swal2-popup",
+          title: "custom-swal2-title",
+          content: "custom-swal2-content",
+        },
+      });
+    }
+  
   };
   const [tableView, setTableView] = useState(tableViewData);
   const [visibleColumns, setvisibleColumns] = useState();
@@ -212,7 +234,7 @@ function Entities() {
         </div>
       </div>
       {/* table */}
-      <div className="max-h-[457px] overflow-y-scroll mt-5">
+      <div className="max-h-[457px] overflow-y-auto mt-5">
         {visibleColumns && tableView && entities?.Entities && (
           <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
             <thead>
@@ -303,19 +325,21 @@ function Entities() {
                         }-${year}`;
                       }
                       if (key === "name") {
+                        let meetingPermission = permissions.find((permission=>permission.module ==="meeting"))
                         return (
                           <td
                             key={key}
-                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                             title={row[key]}
                           >
-                            <GateKeeper
+                          {meetingPermission?.canRead ?   <GateKeeper
                               permissionCheck={(permission) =>
-                                permission.module === "entity" &&
+                                permission.module === "meeting" &&
                                 permission.canRead
                               }
                             >
                               <Link
+                               className="hover:text-orange-500"
                               to={{
                                 pathname: `${row.id}/entityboardmeetings`,
                                 search: `?search=&page=1&pageSize=10`,
@@ -327,7 +351,7 @@ function Entities() {
                                   {caseLetter(value)}
                                 </p>
                               </Link>
-                            </GateKeeper>
+                            </GateKeeper>  :   <p className="truncate text-xs">  {caseLetter(value)}</p>}
                           </td>
                         );
                       } else {
@@ -482,7 +506,7 @@ function Entities() {
             <select
               value={Qparams?.pageSize}
               onChange={handlePerPageChange}
-              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500"
+              className="focus:outline-none me-3 rounded-md bg-[#f8fafc]  px-1 py-1.5 text-sm font-semibold  ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm  text-gray-500 cursor-pointer"
             >
               <option value="10">10</option>
               <option value="25">25</option>
