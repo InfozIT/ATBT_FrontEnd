@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext } from "react";
 import {
   Link,
   useFetcher,
@@ -17,8 +17,8 @@ import CustomColumn from "../../../../componentLayer/components/tableCustomizati
 import CustomFilter from "../../../../componentLayer/components/tableCustomization/CustomFilter";
 import atbtApi from "../../../../serviceLayer/interceptor";
 import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
+import { PermissionsContext } from "../../../../rbac/PermissionsProvider";
 const userData = JSON.parse(localStorage.getItem("data"));
-let permissions = userData?.role?.Permissions
 const userId = userData?.user?.id;
 const role = userData?.role?.name;
 export async function loader({ request, params }) {
@@ -72,7 +72,8 @@ export async function action({ request, params }) {
   }
 }
 function Users() {
-  let location  = useLocation()
+  const { permissions, loading } = useContext(PermissionsContext);
+   let location  = useLocation()
   console.log("loctoion",location)
   document.title = "ATBT | User";
   const navigation = useNavigation();
@@ -85,7 +86,12 @@ function Users() {
     page: 1,
     pageSize: 10,
   });
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     debouncedParams(Qparams);
   }, [Qparams]);
   const debouncedParams = useCallback(
@@ -177,7 +183,7 @@ function Users() {
   const handleDeleteUser = async (id) => {
     const confirmDelete = await Swal.fire({
       title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this user!",
+      text: "Once the user deleted, decisions assigned to user will also get deleted permanently.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#ea580c",
@@ -259,13 +265,14 @@ function Users() {
             />
           </div>
         </div>
-        <div className="grid1-item text-end flex justify-end filter_pagination divide-x-2 h-7 mt-2">
+        <div className="grid1-item text-end flex justify-end filter_pagination divide-x-2 ">
           <CustomColumn
             tableView={tableView}
             setTableView={setTableView}
             form="userform"
           />
           <CustomFilter
+            
             fieldsDropDownData={fieldsDropDownData}
             Qparams={Qparams}
             setQParams={setQParams}
@@ -344,7 +351,7 @@ function Users() {
 
                       if (key === "name") {
                        
-let meetingPermission = permissions.find((permission=>permission.module ==="meeting"))
+let meetingPermission = permissions?.find((permission=>permission.module ==="meeting"))
 
                         return (
                           <td
@@ -380,7 +387,7 @@ let meetingPermission = permissions.find((permission=>permission.module ==="meet
                         return (
                           <td
                             key={key}
-                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium truncate  hover:text-orange-500 overflow-hidden`}
+                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium truncate  overflow-hidden`}
                             style={{ maxWidth: "10rem" }}
                             title={entity_name}
                           >
@@ -394,7 +401,7 @@ let meetingPermission = permissions.find((permission=>permission.module ==="meet
                         return (
                           <td
                             key={key}
-                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium truncate  hover:text-orange-500 overflow-hidden`}
+                            className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium truncate   overflow-hidden`}
                             style={{ maxWidth: "10rem" }}
                             title={role_name}
                           >

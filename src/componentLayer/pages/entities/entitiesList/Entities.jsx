@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useContext } from "react";
 import {
   Link,
   useFetcher,
@@ -14,8 +14,8 @@ import atbtApi from "../../../../serviceLayer/interceptor";
 import CustomColumn from "../../../components/tableCustomization/CustomColumn";
 import CustomFilter from "../../../components/tableCustomization/CustomFilter";
 import BreadCrumbs from "../../../components/breadcrumbs/BreadCrumbs";
+import { PermissionsContext } from "../../../../rbac/PermissionsProvider";
 const userData = JSON.parse(localStorage.getItem("data"));
-let permissions = userData?.role?.Permissions
 export async function loader({ request, params }) {
   try {
     let url = new URL(request.url);
@@ -66,6 +66,8 @@ export async function action({ request, params }) {
   }
 }
 function Entities() {
+  const { permissions, loading } = useContext(PermissionsContext);
+
   document.title = "ATBT | Entity";
   const navigation = useNavigation();
   const data = useLoaderData();
@@ -78,7 +80,13 @@ function Entities() {
     page: 1,
     pageSize: 10,
   });
+  const isFirstRender = useRef(true);
+  
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     debouncedParams(Qparams);
   }, [Qparams]);
   const debouncedParams = useCallback(
@@ -106,7 +114,7 @@ function Entities() {
     console.log(selectedValue, "sv");
     setQParams({
       ...Qparams,
-      page:1,
+      page: 1,
       pageSize: selectedValue,
     });
   };
@@ -116,8 +124,8 @@ function Entities() {
     }
   }, [fetcher, navigation]);
   const handleDeleteUser = async (id) => {
-    let entityUsers = await  atbtApi.post(`entity/User/list/${id}`);
-    if(entityUsers?.data.length === 0 ){
+    let entityUsers = await atbtApi.post(`entity/User/list/${id}`);
+    if (entityUsers?.data.length === 0) {
       const confirmDelete = await Swal.fire({
         title: "Are you sure?",
         text: "Once deleted, you will not be able to recover this Entity!",
@@ -140,11 +148,19 @@ function Entities() {
           Swal.fire("Error", "Unable to delete entity 🤯", "error");
         }
       }
-    }
-    else{
+    } else {
       const confirmDelete = await Swal.fire({
         title: "Entity can't be deleted",
-        text: `You cannot delete entity because there are ${entityUsers?.data.length} users(${entityUsers?.data.map((user)=>user.name).join(", ")}) are present`,
+        text: `You cannot delete entity because there are ${
+          entityUsers?.data.length
+        } 
+        ${
+          entityUsers?.data.length > 1 ? `users` : `user`
+        }   
+        
+        (${entityUsers?.data
+          .map((user) => user.name)
+          .join(", ")}) are present`,
         icon: "warning",
         showCancelButton: false,
         confirmButtonColor: "#ea580c",
@@ -157,7 +173,6 @@ function Entities() {
         },
       });
     }
-  
   };
   const [tableView, setTableView] = useState(tableViewData);
   const [visibleColumns, setvisibleColumns] = useState();
@@ -325,33 +340,41 @@ function Entities() {
                         }-${year}`;
                       }
                       if (key === "name") {
-                        let meetingPermission = permissions.find((permission=>permission.module ==="meeting"))
+                        let meetingPermission = permissions?.find(
+                          (permission) => permission.module === "meeting"
+                        );
                         return (
                           <td
                             key={key}
                             className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                             title={row[key]}
                           >
-                          {meetingPermission?.canRead ?   <GateKeeper
-                              permissionCheck={(permission) =>
-                                permission.module === "meeting" &&
-                                permission.canRead
-                              }
-                            >
-                              <Link
-                               className="hover:text-orange-500"
-                              to={{
-                                pathname: `${row.id}/entityboardmeetings`,
-                                search: `?search=&page=1&pageSize=10`,
-                              }}
-                        
+                            {meetingPermission?.canRead ? (
+                              <GateKeeper
+                                permissionCheck={(permission) =>
+                                  permission.module === "meeting" &&
+                                  permission.canRead
+                                }
                               >
-                                <p className="truncate text-xs">
-                                  {" "}
-                                  {caseLetter(value)}
-                                </p>
-                              </Link>
-                            </GateKeeper>  :   <p className="truncate text-xs">  {caseLetter(value)}</p>}
+                                <Link
+                                  className="hover:text-orange-500"
+                                  to={{
+                                    pathname: `${row.id}/entityboardmeetings`,
+                                    search: `?search=&page=1&pageSize=10`,
+                                  }}
+                                >
+                                  <p className="truncate text-xs">
+                                    {" "}
+                                    {caseLetter(value)}
+                                  </p>
+                                </Link>
+                              </GateKeeper>
+                            ) : (
+                              <p className="truncate text-xs">
+                                {" "}
+                                {caseLetter(value)}
+                              </p>
+                            )}
                           </td>
                         );
                       } else {
@@ -368,29 +391,29 @@ function Entities() {
                       }
                     })}
                     <td
-                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                     >
-                      200
+                      {row?.taskCounts?.totalTaskCount}
                     </td>
                     <td
-                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium  overflow-hidden`}
                     >
-                      100
+                      {row?.taskCounts?.toDoCount}
                     </td>
                     <td
-                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                     >
-                      50
+                      {row?.taskCounts?.inProgressCount}
                     </td>
                     <td
-                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                     >
-                      50
+                      {row?.taskCounts?.overDueCount}
                     </td>
                     <td
-                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium hover:text-orange-500  overflow-hidden`}
+                      className={`px-3 py-2 text-left border border-[#e5e7eb] text-xs font-medium   overflow-hidden`}
                     >
-                      50
+                      {row?.taskCounts?.completedCount}
                     </td>
 
                     <td

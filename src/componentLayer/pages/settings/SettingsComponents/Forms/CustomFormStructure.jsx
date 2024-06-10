@@ -392,7 +392,7 @@ const CustomFormStructure = () => {
           )}
           {formName === "boardmeetingform" && (
             <span className="text-lg md:text-xl lg:text-xl xl:text-xl font-semibold">
-              Board Meeting Form
+               Meeting Form
             </span>
           )}
           {formName === "teamform" && (
@@ -1151,16 +1151,16 @@ export default CustomFormStructure;
 ///////////////////////////////////////// board meeting
 //  [
 //   {
-//     "label": "Board Meeting Number",
+//     "label": "Meeting Id",
 //     "inputname": "meetingnumber",
-//     "type": "number",
+//     "type": "text",
 //     "value": "",
 //     "field": "predefined",
 //     "mandatory": true,
 //     "filterable": true
 //   },
 //   {
-//     "label": "Select a Date",
+//     "label": "Meeting Date",
 //     "inputname": "date",
 //     "type": "date",
 //     "value": "",
@@ -1195,12 +1195,12 @@ export default CustomFormStructure;
 // {
 
 //   "meetingnumber": {
-//     "label": "Board Meeting Number",
+//     "label": "Meeting Id",
 //     "value": true,
-//     "type": "number"
+//     "type": "text"
 //   },
 //   "date": {
-//     "label": "Select a Date",
+//     "label": "Meeting Date",
 //     "value": true,
 //     "type": "date"
 //   }

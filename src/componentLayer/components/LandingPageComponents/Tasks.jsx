@@ -1,10 +1,17 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useContext,
+} from "react";
 import {
   NavLink,
   useParams,
   useLoaderData,
   useFetcher,
   useSubmit,
+  useLocation,
 } from "react-router-dom";
 import Select from "react-select";
 import TaskOverview from "./TaskOverview";
@@ -13,8 +20,8 @@ import { debounce } from "../../../utils/utils";
 import subtask_icon from "../../../assets/Images/Subtask_icon.svg";
 import "react-datepicker/dist/react-datepicker.css";
 import GateKeeper from "../../../rbac/GateKeeper";
-
-
+import { AuthContext } from "../../../contexts/authContext/authContext";
+import TasksFilter from "../tableCustomization/TasksFilter";
 let status = [
   { label: "To-Do", value: "To-Do" },
   { label: "In-Progress", value: "In-Progress" },
@@ -27,7 +34,6 @@ let idOF;
 export async function tasksLoader({ request, params }) {
   try {
     const url = new URL(request.url);
-
     if (url.pathname.split("/")[1] === "users") {
       parentPath = "users";
       // groupName = "groupUser";
@@ -43,27 +49,147 @@ export async function tasksLoader({ request, params }) {
       // groupName = "groupTeam";
       idOF = "teamId";
     }
+    if (url.pathname.split("/")[1] === "tasks") {
+      parentPath = "tasks";
+    }
     console.log("url", url.pathname.split("/")[1]);
     const taskID = url.searchParams.get("taskID");
     const subTaskID = url.searchParams.get("subTaskID");
     const statusType = url.searchParams.get("status");
     console.log("statusType", statusType);
-    const [tasks, task, subTasks, subTask] =
-      await Promise.all([
-        params.BMid
-          ? atbtApi.get(`task/list?meetingId=${params.BMid}`)
-          : statusType !== null
-          ? atbtApi.get(`task/list?${idOF}=${params.id}&status=${statusType}`)
-          : atbtApi.get(`task/list?${idOF}=${params.id}`),
-        // atbtApi.get(`task/listAll?user=${params.id}`),
-        taskID ? atbtApi.get(`task/listbyid/${taskID}`) : null,
-        taskID ? atbtApi.get(`task/subList/${taskID}`) : null,
-        subTaskID ? atbtApi.get(`task/subtaskbyid/${subTaskID}`) : null,
-        // groupName && params.BMid
-        //   ? atbtApi.get(`/boardmeeting/${groupName}/${params.BMid}`)
-        //   : {},
-       
-      ]);
+    const [tasks, task, subTasks, subTask] = await Promise.all([
+      params.BMid
+        ? atbtApi.get(`task/list?meetingId=${params.BMid}`)
+        : statusType !== null
+        ? atbtApi.get(`task/list?${idOF}=${params.id}&status=${statusType}`)
+        : atbtApi.get(`task/list?${idOF}=${params.id}`),
+      // atbtApi.get(`task/listAll?user=${params.id}`),
+      taskID ? atbtApi.get(`task/listbyid/${taskID}`) : null,
+      taskID ? atbtApi.get(`task/subList/${taskID}`) : null,
+      subTaskID ? atbtApi.get(`task/subtaskbyid/${subTaskID}`) : null,
+      // groupName && params.BMid
+      //   ? atbtApi.get(`/boardmeeting/${groupName}/${params.BMid}`)
+      //   : {},
+    ]);
+    // console.log("personResponsiblee", personResponsible);
+    let updatedTask = task?.data[0];
+    let updatedSubTask = subTask?.data[0];
+    let taskAge = null;
+    let subTaskAge = null;
+    if (updatedTask) {
+      const currentDate = new Date();
+      const enteredDate = new Date(updatedTask?.createdAt);
+      const differenceInMilliseconds = currentDate - enteredDate;
+      const differenceInDays = differenceInMilliseconds / (1000 * 3600 * 24);
+      taskAge = Math.floor(differenceInDays);
+      updatedTask.age = taskAge;
+    }
+    if (updatedSubTask) {
+      const currentDate = new Date();
+      const enteredDate = new Date(updatedSubTask?.createdAt);
+      const differenceInMilliseconds = currentDate - enteredDate;
+      const differenceInDays = differenceInMilliseconds / (1000 * 3600 * 24);
+      subTaskAge = Math.floor(differenceInDays);
+      updatedSubTask.age = subTaskAge;
+    }
+    const combinedResponse = {
+      tasks: tasks?.data,
+      task: updatedTask,
+      subTasks: subTasks?.data?.Task,
+      subTask: updatedSubTask,
+      threadName: params.BMid ? `Meetings Tasks` : `Tasks`,
+      threadPath: params.BMid
+        ? `/${parentPath}/${params.id}/${params.boardmeetings}/${params.BMid}/tasks`
+        : `/${parentPath}/${params.id}/tasks`,
+      threadPathForOutsideBM: `/boardmeetings/${params.BMid}/tasks`,
+    };
+    console.log("tasks tasksLoader");
+    console.log("combinedResponse", combinedResponse);
+    return combinedResponse;
+  } catch (error) {
+    console.log(error, "which error");
+    if (error.response) {
+      throw new Error(`Failed to fetch data: ${error.response.status}`);
+    } else if (error.request) {
+      throw new Error("Request made but no response received");
+    } else {
+      throw new Error(`Error setting up request: ${error.message}`);
+    }
+  }
+}
+export async function AllTasksLoader({ request, params }) {
+  try {
+    const url = new URL(request.url);
+    if (url.pathname.split("/")[1] === "tasks") {
+      parentPath = "tasks";
+    }
+    console.log("url", url.pathname.split("/")[1]);
+    const taskID = url.searchParams.get("taskID");
+    const subTaskID = url.searchParams.get("subTaskID");
+    const statusType = url.searchParams.get("status");
+    const fromDate = url.searchParams.get("fromDate");
+    const moduleName = url.searchParams.get("moduleName");
+    const listID = url.searchParams.get("listID");
+    const meetingId = url.searchParams.get("meetingId");
+    const toDate = url.searchParams.get("toDate");
+    let idOF;
+    if (moduleName === "user") {
+      idOF = "userId";
+    } else if (moduleName === "entity") {
+      idOF = "entityId";
+    } else if (moduleName === "team") {
+      idOF = "teamId";
+    }
+    console.log("statusType", statusType);
+    const queryParams = [];
+
+  // Validate and add query parameters
+  if (meetingId && meetingId !== "all") {
+    queryParams.push(`meetingId=${meetingId}`);
+  } else if (meetingId === "all" && listID) {
+    queryParams.push(`${idOF}=${listID}`);
+  }
+  if (statusType && statusType !== "null") {
+    queryParams.push(`status=${statusType}`);
+  }
+  if (fromDate && toDate) {
+    queryParams.push(`fromDate=${fromDate}`, `toDate=${toDate}`);
+  }
+  const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+ console.log(queryString,"queryString")
+
+    const [tasks, task, subTasks, subTask] = await Promise.all([
+atbtApi.get(`task/list${queryString}`),
+
+      // meetingId !== "all" && statusType !== "null"
+      //   ? atbtApi.get(`task/list?meetingId=${meetingId}&status=${statusType}`)
+      //   : meetingId !== "all" && statusType === "null"
+      //   ? atbtApi.get(`task/list?meetingId=${meetingId}`)
+      //   : meetingId === "all" && statusType !== "null"
+      //   ? atbtApi.get(`task/list?${idOF}=${listID}&status=${statusType}`)
+      //   : meetingId === "all" && statusType === "null"
+      //   ? atbtApi.get(`task/list?${idOF}=${listID}`)
+      //   : null,
+      // statusType !== null && fromDate && toDate
+      //   ? atbtApi.get(
+      //       `task/list?status=${statusType}&fromDate=${fromDate}&toDate=${toDate}`
+      //     )
+      //   : statusType !== null && !fromDate && !toDate
+      //   ? atbtApi.get(
+      //       `task/list?status=${statusType}`
+      //     )
+      //   : atbtApi.get(`task/list`),
+
+      // atbtApi.get(
+      //         `task/list${url?.search ? url?.search : ""}`
+      //       ),
+      taskID ? atbtApi.get(`task/listbyid/${taskID}`) : null,
+      taskID ? atbtApi.get(`task/subList/${taskID}`) : null,
+      subTaskID ? atbtApi.get(`task/subtaskbyid/${subTaskID}`) : null,
+      // groupName && params.BMid
+      //   ? atbtApi.get(`/boardmeeting/${groupName}/${params.BMid}`)
+      //   : {},
+    ]);
     // console.log("personResponsiblee", personResponsible);
     let updatedTask = task?.data[0];
     let updatedSubTask = subTask?.data[0];
@@ -94,11 +220,13 @@ export async function tasksLoader({ request, params }) {
       //   label: user.name,
       //   value: user.id,
       // })),
-      threadName: params.BMid ? ` Board Meetings Tasks` : `Tasks`,
-      threadPath: params.BMid
-        ? `/${parentPath}/${params.id}/${params.boardmeetings}/${params.BMid}/tasks`
-        : `/${parentPath}/${params.id}/tasks`,
+      // threadName: params.BMid ? ` Board Meetings Tasks` : `Tasks`,
+      // threadPath: params.BMid
+      //   ? `/${parentPath}/${params.id}/${params.boardmeetings}/${params.BMid}/tasks`
+      //   : `/${parentPath}/${params.id}/tasks`,
     };
+    console.log("tasks AllTasksLoader");
+
     console.log("combinedResponse", combinedResponse);
     return combinedResponse;
   } catch (error) {
@@ -124,10 +252,9 @@ export async function TasksActions({ request, params }) {
             `task/add/${params.BMid}`,
 
             {
-              taskCreatedBy: { name: parentPath, id: params.id },
-              collaborators: [
-                parseInt(JSON.parse(localStorage.getItem("data")).user.id),
-              ],
+              createdby: requestBody.createdby,
+              taskCreatedBy: { name: parentPath, id: parseInt(params.id) },
+              collaborators: [requestBody.createdby],
             }
           );
         }
@@ -194,7 +321,10 @@ export async function TasksActions({ request, params }) {
   }
 }
 const Tasks = () => {
+  const { authState } = useContext(AuthContext);
+  console.log("authState authState", authState?.user?.id);
   let submit = useSubmit();
+  let location = useLocation();
   const data = useLoaderData();
   let [tasks, setTasks] = useState([]);
   let [task, setTask] = useState({});
@@ -218,7 +348,14 @@ const Tasks = () => {
     }
     return initialState;
   });
+  console.log(Qparams,"Qparams")
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     debouncedParams(Qparams);
   }, [Qparams]);
   const debouncedParams = useCallback(
@@ -228,7 +365,6 @@ const Tasks = () => {
     }, 500),
     []
   );
-
   const [overViewTask, setOverViewTask] = useState(false);
   const [displayOverviewTask, setDisplayOverviewTask] = useState(false);
   const [displayOverviewSubTask, setDisplayOverviewSubTask] = useState(false);
@@ -238,7 +374,10 @@ const Tasks = () => {
     setQParams((prev) => ({ ...prev, taskID: taskId }));
   };
   const handleAddNewTask = async () => {
-    let requestBody = { type: "ADD_NEW_TASK" };
+    let requestBody = {
+      type: "ADD_NEW_TASK",
+      createdby: parseInt(authState?.user?.id),
+    };
 
     try {
       fetcher.submit(requestBody, {
@@ -355,7 +494,6 @@ const Tasks = () => {
   const [isSubTaskInputActiveID, setIsSubTaskInputActive] = useState(null);
   const [autoFocusID, setAutoFocusID] = useState(null);
   const [autoFocusSubTaskID, setAutoFocussubTaskID] = useState(null);
-
   const [activeLink, setActiveLink] = useState("toDo");
 
   // Function to handle click and set active link
@@ -368,19 +506,111 @@ const Tasks = () => {
     const year = today.getFullYear();
     let month = today.getMonth() + 1;
     let day = today.getDate();
-
     month = month < 10 ? `0${month}` : month;
     day = day < 10 ? `0${day}` : day;
-
     return `${year}-${month}-${day}`;
   };
+  function handleSearch(event) {
+    setQParams({
+      ...Qparams,
+      search: event.target.value,
+    });
+  }
+  let [dueDateFilter, setDueDateFilter] = useState({});
 
   return (
-    <div className="">
+    <div className={` ${location.pathname === "/tasks" ? "p-3" : ""}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-col-4 items-center gap-2 mt-2">
+        <div className="col-span-1">
+          {location.pathname === "/tasks" && (
+            <p className="text-md font-semibold">Tasks</p>
+          )}
+        </div>
+
+        <div className="col-span-1 text-start">
+          {/* <div className="relative">
+            <div className="absolute inset-y-0 start-0 flex items-center p-3 pointer-events-none">
+              <svg
+                className="w-3 h-3 text-gray-500 dark:text-gray-400"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+                />
+              </svg>
+            </div>
+            <input
+              onChange={handleSearch}
+              value={Qparams?.search}
+              type="search"
+              id="default-search"
+              className="block w-full px-4 py-2 ps-8 text-sm border-2 border-gray-200  rounded-2xl bg-gray-50  focus:outline-none placeholder:text-sm"
+              placeholder="Search here..."
+              required
+            />
+          </div> */}
+        </div>
+
+      {parentPath === "tasks" &&  <div className="col-span-2 text-end">
+          <div className="flex gap-2 items-center justify-end">
+            <label className="text-sm text-gray-400"> From:</label>
+
+            <input
+              className=" border border-gray-200  text-black px-1.5 py-2 rounded-md  bg-[#f9fafb] focus:outline-none text-sm focus:border-orange-400  date_type"
+              type="date"
+              value={dueDateFilter.fromDate}
+              style={{
+                fontSize: "0.8rem",
+                WebkitAppearance: "none",
+              }}
+              onChange={(e) => {
+                // handleSubmit(task?.id, "dueDate", e.target.value);
+                setQParams((prev) => ({ ...prev, fromDate: e.target.value }));
+                setDueDateFilter((prev) => ({
+                  ...prev,
+                  fromDate: e.target.value,
+                }));
+                // handleTaskChange(index, "dueDate", e.target.value);
+              }}
+            />
+            <label className="text-sm text-gray-400"> To:</label>
+            <input
+              className=" border border-gray-200 text-black px-1.5 py-2 rounded-md  bg-[#f9fafb] focus:outline-none text-sm focus:border-orange-400 date_type"
+              type="date"
+              // value={task?.dueDate}
+              style={{
+                fontSize: "0.8rem",
+                WebkitAppearance: "none",
+              }}
+              onChange={(e) => {
+                setQParams((prev) => ({
+                  ...prev,
+
+                  toDate: e.target.value,
+                }));
+                setDueDateFilter((prev) => ({
+                  ...prev,
+                  toDate: e.target.value,
+                }));
+              }}
+            />
+
+            <TasksFilter Qparams={Qparams} setQParams={setQParams} />
+          </div>
+        </div>}
+      </div>
+
       <div className="flex justify-end">
         {BMid && (
-          <GateKeeper         
-             permissionCheck={(permission) =>
+          <GateKeeper
+            permissionCheck={(permission) =>
               permission.module === "task" && permission.canCreate
             }
           >
@@ -396,30 +626,65 @@ const Tasks = () => {
               >
                 <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
               </svg>
-              Add Task
+              Create
             </button>
           </GateKeeper>
         )}
       </div>
       <div>
         <div className="flex overflow-x-auto my-2">
-          {!BMid && (
+          {!BMid &&
+            (parentPath === "users" ||
+              parentPath === "entities" ||
+              parentPath === "teams") && (
+              <NavLink
+                to={`/${parentPath}/${id}/tasks?status=To-Do`}
+                end
+                className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
+                  activeLink === "toDo"
+                    ? "border-b-2 border-orange-500 text-orange-600"
+                    : ""
+                }`}
+                onClick={() => handleNavLinkClick("toDo")}
+              >
+                To-Do
+              </NavLink>
+            )}
+          {!BMid && parentPath === "tasks" && (
             <NavLink
-              to={`/${parentPath}/${id}/tasks?status=To-Do`}
+              to={`/tasks?status=To-Do`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "toDo"
                   ? "border-b-2 border-orange-500 text-orange-600"
                   : ""
               }`}
+              // onClick={() =>{ handleNavLinkClick("toDo");setQParams((prev)=>({...prev,status:"To-Do"}))}}
               onClick={() => handleNavLinkClick("toDo")}
             >
               To-Do
             </NavLink>
           )}
-          {!BMid && (
+          {!BMid &&
+            (parentPath === "users" ||
+              parentPath === "entities" ||
+              parentPath === "teams") && (
+              <NavLink
+                to={`/${parentPath}/${id}/tasks?status=In-Progress`}
+                end
+                className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
+                  activeLink === "inProgress"
+                    ? "border-b-2 border-orange-500 text-orange-600"
+                    : ""
+                }`}
+                onClick={() => handleNavLinkClick("inProgress")}
+              >
+                In-Progress
+              </NavLink>
+            )}
+          {!BMid && parentPath === "tasks" && (
             <NavLink
-              to={`/${parentPath}/${id}/tasks?status=In-Progress`}
+              to={`/tasks?status=In-Progress`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "inProgress"
@@ -427,14 +692,33 @@ const Tasks = () => {
                   : ""
               }`}
               onClick={() => handleNavLinkClick("inProgress")}
+              // onClick={() =>{ handleNavLinkClick("inProgress");setQParams((prev)=>({...prev,status:"In-Progress"}))}}
+
             >
               In-Progress
             </NavLink>
           )}
 
-          {!BMid && (
+          {!BMid &&
+            (parentPath === "users" ||
+              parentPath === "entities" ||
+              parentPath === "teams") && (
+              <NavLink
+                to={`/${parentPath}/${id}/tasks?status=Over-Due`}
+                end
+                className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
+                  activeLink === "OverDue"
+                    ? "border-b-2 border-orange-500 text-orange-600"
+                    : ""
+                }`}
+                onClick={() => handleNavLinkClick("OverDue")}
+              >
+                Overdue
+              </NavLink>
+            )}
+          {!BMid && parentPath === "tasks" && (
             <NavLink
-              to={`/${parentPath}/${id}/tasks?status=Over-Due`}
+              to={`/tasks?status=Over-Due`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "OverDue"
@@ -442,13 +726,32 @@ const Tasks = () => {
                   : ""
               }`}
               onClick={() => handleNavLinkClick("OverDue")}
+              // onClick={() =>{ handleNavLinkClick("OverDue");setQParams((prev)=>({...prev,status:"Over-Due"}))}}
+
             >
               Overdue
             </NavLink>
           )}
-          {!BMid && (
+          {!BMid &&
+            (parentPath === "users" ||
+              parentPath === "entities" ||
+              parentPath === "teams") && (
+              <NavLink
+                to={`/${parentPath}/${id}/tasks?status=Completed`}
+                end
+                className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
+                  activeLink === "Completed"
+                    ? "border-b-2 border-orange-500 text-orange-600"
+                    : ""
+                }`}
+                onClick={() => handleNavLinkClick("Completed")}
+              >
+                Completed
+              </NavLink>
+            )}
+          {!BMid && parentPath === "tasks" && (
             <NavLink
-              to={`/${parentPath}/${id}/tasks?status=Completed`}
+              to={`/tasks?status=Completed`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Completed"
@@ -456,55 +759,80 @@ const Tasks = () => {
                   : ""
               }`}
               onClick={() => handleNavLinkClick("Completed")}
+              // onClick={() =>{ handleNavLinkClick("Completed");setQParams((prev)=>({...prev,status:"Completed"}))}}
+
             >
               Completed
             </NavLink>
           )}
-          {!BMid && (
+          {!BMid &&
+            (parentPath === "users" ||
+              parentPath === "entities" ||
+              parentPath === "teams") && (
+              <NavLink
+                to={`/${parentPath}/${id}/tasks`}
+                end
+                className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
+                  activeLink === "Master" ? "border-b-2 border-orange-600" : ""
+                }`}
+                onClick={() => handleNavLinkClick("Master")}
+              >
+                Master
+              </NavLink>
+            )}
+          {!BMid && parentPath === "tasks" && (
             <NavLink
-              to={`/${parentPath}/${id}/tasks`}
+              to={`/tasks`}
               end
               className={`cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09] ${
                 activeLink === "Master" ? "border-b-2 border-orange-600" : ""
               }`}
               onClick={() => handleNavLinkClick("Master")}
+              // onClick={() =>{ handleNavLinkClick("Master");
+              // let Qprams = {...Qparams}
+              // delete Qprams.status
+              // setQParams(Qprams)}}
+
             >
               Master
             </NavLink>
           )}
         </div>
       </div>
-      <div className=" max-h-[410px] overflow-y-auto ">
+      <div className=" max-h-[410px] overflow-y-auto">
         <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md table ">
           <thead>
             <tr>
               <th
-                className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200"
+                className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200"
                 style={{ width: "20rem" }}
               >
                 Decision Taken
               </th>
               <th
-                className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10"
+                className="sticky top-0 z-10  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 "
                 style={{ width: "13rem" }}
               >
                 Person Responsible
               </th>
               <th
-                className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10"
+                className="sticky top-0 z-10 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 "
                 style={{ width: "6rem" }}
               >
                 Due Date
               </th>
-              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 z-10">
+              <th
+                className="sticky top-0 z-10 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 "
+                style={{ width: "8rem" }}
+              >
                 Decision Status
               </th>
-              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 ">
-                Decision Updated of User
+              <th className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200 ">
+                Latest Decision Update
               </th>
-              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
+              {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Decision Updated of Admin
-              </th>
+              </th> */}
               {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Actions
               </th> */}
@@ -542,7 +870,7 @@ const Tasks = () => {
                       {(isInputActiveID !== task.id ||
                         isInputActiveID === null) && (
                         <p
-                          className="text-sm"
+                          className="text-sm break-words"
                           onClick={() => {
                             setIsInputActive(task.id);
                             setAutoFocusID(task.id);
@@ -558,7 +886,7 @@ const Tasks = () => {
                       )}
                       <div className="flex">
                         {task.subtaskCount > 0 && (
-                          <span className="flex items-center ml-2 px-0.5 cursor-pointer border border-[#f8fafc] hover:border hover:border-gray-500 hover:rounded-sm hover:bg-gray-100">
+                          <span className="flex items-center ml-2 px-0.5 ">
                             <span className="text-sm">{task.subtaskCount}</span>
                             <svg
                               viewBox="0 0 32 32"
@@ -681,6 +1009,9 @@ const Tasks = () => {
                             )
                       }
                       menuPlacement="auto"
+                      maxMenuHeight={150}
+                      // closeMenuOnSelect={()=> true}
+                      // menuIsOpen = {()=> true}
                     />
                   </td>
                   <td className="border py-1.5 px-2">
@@ -701,7 +1032,6 @@ const Tasks = () => {
                   </td>
                   <td className="border py-1.5 px-2" title={task?.status}>
                     <Select
-                   
                       options={status}
                       menuPortalTarget={document.body}
                       closeMenuOnScroll={() => true}
@@ -729,7 +1059,7 @@ const Tasks = () => {
                           "&:focus-within": {
                             borderColor: "#fb923c",
                           },
-                          width: "6.5rem",
+                          width: "8rem",
                         }),
                         option: (provided, state) => ({
                           ...provided,
@@ -769,11 +1099,11 @@ const Tasks = () => {
                     />
                   </td>
                   <td className="border py-1.5 px-2 text-sm text-gray-600">
-                    Updated By User
+                    {task?.updatedbyuser}
                   </td>
-                  <td className="border py-1.5 px-2 text-sm text-gray-600">
+                  {/* <td className="border py-1.5 px-2 text-sm text-gray-600">
                     Updated By Admin
-                  </td>
+                  </td> */}
                   {/* <td className="border py-1.5 px-3 text-sm text-gray-600 cursor-pointer" style={{width :"3rem"}} >
                     <svg
                       onClick={() => handleDeleteTask(task.id)}
@@ -800,7 +1130,6 @@ const Tasks = () => {
         task={task}
         subTasks={subTasks}
         subTask={subTask}
-
         setTask={setTask}
         Qparams={Qparams}
         setQParams={setQParams}
@@ -808,7 +1137,6 @@ const Tasks = () => {
         handleOverviewTaskChange={handleOverviewTaskChange}
         overViewTask={overViewTask}
         handleSubmit={handleSubmit}
-      
         status={status}
         handleAddSubTask={handleAddSubTask}
         handleSubTaskChange={handleSubTaskChange}
