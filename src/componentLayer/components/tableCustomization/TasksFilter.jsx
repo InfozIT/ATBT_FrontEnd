@@ -19,7 +19,6 @@ function TasksFilter({
 
   // Access individual query parameters by name
   const status = queryParams.get('status');
- 
   function handlefilters() {
     let Qp
     if(status === null){
@@ -28,7 +27,6 @@ function TasksFilter({
     }else {
         Qp ={...Qparams,status:status}
     }
-   
     console.log("Qparams",Qparams,"selectedFilters",selectedFilters)
     setQParams({
       ...Qp,
@@ -57,10 +55,24 @@ function TasksFilter({
 
   const handleFilterReset = () => {
     setSelectedFilters({});
+  
+    setSelectedModule(null)
+    setSelectedModuleList(null)
+    setSelectedMeeting(null)
+    setModuleListOptions()
+    setMeetingList()
+    let qprms = {...Qparams}
+    delete qprms.listID
+    delete qprms.meetingId
+    delete qprms.moduleName
+
+
+
     setQParams({
-      search: Qparams?.search,
-      page: Qparams?.page,
-      pageSize: Qparams?.pageSize,
+      ...qprms,
+    //   search: Qparams?.search,
+    //   page: Qparams?.page,
+    //   pageSize: Qparams?.pageSize,
     });
     setFilterDrawerOpen(!filterDrawerOpen);
   };
@@ -149,7 +161,10 @@ function TasksFilter({
           label: meeting.meetingnumber,
           value: meeting.id,
         }));
-     response?.unshift({label:"All Meetings",value:"all"})
+        if(response?.length>0){
+          response?.unshift({label:"All Meetings",value:"all"})
+
+        }
         console.log(response,"response b")
 
         // Update state with the data from the API response
