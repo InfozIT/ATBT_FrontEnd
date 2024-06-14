@@ -39,7 +39,7 @@ const UserLandingPage = () => {
         </p>
       </div>
       <div className="flex overflow-x-auto">
-        {!BMid && (
+        {/* {!BMid && (
           <GateKeeper
             permissionCheck={(permission) =>
               permission.module === "meeting" && permission.canRead
@@ -70,7 +70,7 @@ const UserLandingPage = () => {
             }
           >
             <NavLink
-              to={`userboardmeetings/${BMid}/tasks`}
+              to={`userboardmeetings/${BMid}/tasks?search=&page=1&pageSize=10`}
               end
               isActive={(match, location) =>
                 match ||
@@ -84,7 +84,7 @@ const UserLandingPage = () => {
                   : "cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09]"
               }
             >
-              Meeting Tasks
+              Meeting Decisions
             </NavLink>
           </GateKeeper>
         )}
@@ -96,10 +96,11 @@ const UserLandingPage = () => {
             }
           >
             <NavLink
-              to={{
-                pathname: "tasks/To-Do",
-                // search: `?status=To-Do`,
-              }}
+              // to={{
+              //   pathname: "tasks/To-Do?search=&page=1&pageSize=10",
+              //   // search: `?status=To-Do`,
+              // }}
+              to="tasks/To-Do?search=&page=1&pageSize=10"
               end
               className={({ isActive, isPending, isTransitioning }) =>
                 isPending
@@ -109,7 +110,7 @@ const UserLandingPage = () => {
                   : "cursor-pointer px-4 py-1 text-sm font-[500] text-[#0c0a09]"
               }
             >
-              User Tasks
+              User Decisions
             </NavLink>
           </GateKeeper>
         )}
@@ -142,7 +143,7 @@ const UserLandingPage = () => {
           >
             Meeting Attachments
           </NavLink>
-        )}
+        )} */}
 
         {!BMid && (
           <GateKeeper
@@ -165,7 +166,7 @@ const UserLandingPage = () => {
             </NavLink>
           </GateKeeper>
         )}
-        {BMid && (
+        {/* {BMid && (
           <GateKeeper
             permissionCheck={(permission) =>
               permission.module === "meeting" && permission.canRead
@@ -185,7 +186,7 @@ const UserLandingPage = () => {
               Meeting Overview
             </NavLink>
           </GateKeeper>
-        )}
+        )} */}
       </div>
       <hr />
       <Outlet />

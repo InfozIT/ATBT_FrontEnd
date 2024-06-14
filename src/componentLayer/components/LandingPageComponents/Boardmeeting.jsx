@@ -205,13 +205,13 @@ function Boardmeeting() {
             setTableView={setTableView}
             form="boardmeetingform"
           />
-          {/* <CustomFilter
+          <CustomFilter
           className="mt-2"
             fieldsDropDownData={fieldsDropDownData}
             Qparams={Qparams}
             setQParams={setQParams}
             customForm={customForm}
-          /> */}
+          />
 
           <GateKeeper
             permissionCheck={(permission) =>
@@ -258,31 +258,31 @@ function Boardmeeting() {
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                  Total Tasks
+                  Total Decisions
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                  To-Do Tasks
+                  To-Do Decisions
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                  In-Progress Tasks
+                  In-Progress Decisions
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                  Overdue Tasks
+                  Overdue Decisions
                 </th>
                 <th
                   scope="col"
                   className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200"
                 >
-                  Completed Tasks
+                  Completed Decisions
                 </th>
                 <th
                   scope="col"
@@ -350,7 +350,7 @@ function Boardmeeting() {
                                 permission.canRead
                               }
                             >
-                              <Link to={`${row.id}/tasks`}>
+                              <Link to={`${row.id}/tasks?search=&page=1&pageSize=10`}>
                                 <p className="truncate text-xs"> {value}</p>
                               </Link>
                             </GateKeeper>
