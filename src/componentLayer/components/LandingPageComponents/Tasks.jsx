@@ -24,10 +24,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import GateKeeper from "../../../rbac/GateKeeper";
 import { AuthContext } from "../../../contexts/authContext/authContext";
 import TasksFilter from "../tableCustomization/TasksFilter";
+import DatePicker from "react-datepicker";
+
+import "react-datepicker/dist/react-datepicker.css";
 let status = [
   { label: "To-Do", value: "To-Do" },
   { label: "In-Progress", value: "In-Progress" },
   { label: "Completed", value: "Completed" },
+  { label: "On-Hold", value: "On-Hold" },
 ];
 
 let parentPath;
@@ -63,8 +67,6 @@ export async function tasksLoader({ request, params }) {
     const search = url.searchParams.get("search");
     const page = url.searchParams.get("page");
     const pageSize = url.searchParams.get("pageSize");
-    
-
     // const statusType = url.searchParams.get("status");
     const statusType = params.statusType
     console.log("statusType", statusType);
@@ -1185,6 +1187,16 @@ console.log(activeLink,"activeLink")
                     />
                   </td>
                   <td className="border py-1.5 px-2">
+
+
+                  {/* <DatePicker 
+                  className=" border border-transparent text-black px-1.5 py-2 rounded-md  bg-[#f9fafb] focus:outline-none text-sm focus:border-orange-400  date_type"
+                  selected={task?.dueDate}
+                   onChange={(e) => {
+                        handleSubmit(task?.id, "dueDate", e.target.value);
+                        handleTaskChange(index, "dueDate", e.target.value);
+                      }}
+                      dateFormat='dd/mm/yyyy' /> */}
                     <input
                       className=" border border-transparent text-black px-1.5 py-2 rounded-md  bg-[#f9fafb] focus:outline-none text-sm focus:border-orange-400  date_type"
                       type="date"
