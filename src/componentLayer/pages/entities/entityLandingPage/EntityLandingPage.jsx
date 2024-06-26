@@ -7,10 +7,12 @@ const EntityLandingPage = () => {
   let [ActiveLink, setActiveLink] = useState(false);
   useEffect(() => {
     if (
+      location.pathname == `/entities/${id}/tasks/runningdecisions` ||
       location.pathname == `/entities/${id}/tasks/To-Do` ||
       location.pathname == `/entities/${id}/tasks/In-Progress` ||
       location.pathname == `/entities/${id}/tasks/Over-Due` ||
       location.pathname == `/entities/${id}/tasks/Completed` ||
+      location.pathname == `/entities/${id}/tasks/On-Hold` ||
       location.pathname == `/entities/${id}/tasks/Master`
     ) {
       setActiveLink(true);
@@ -72,7 +74,7 @@ const EntityLandingPage = () => {
             //   pathname: "tasks/To-Do",
             //   // search: `?status=To-Do`,
             // }}
-            to="tasks/To-Do?search=&page=1&pageSize=10"
+            to="tasks/runningdecisions?search=&page=1&pageSize=10"
 
             end
             className={({ isActive, isPending, isTransitioning }) =>

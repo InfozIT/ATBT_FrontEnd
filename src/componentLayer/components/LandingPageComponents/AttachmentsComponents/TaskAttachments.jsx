@@ -1,90 +1,32 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import atbtApi from "../../../serviceLayer/interceptor";
+import React from "react";
 
-const Documents = ({ belongsTo }) => {
-  const { id, BMid } = useParams();
-  console.log("id, BMID", id, BMid);
-  const [MeetingData, setMeetingData] = useState(null);
-  const [file, setFile] = useState(null);
-  const [progress, setProgress] = useState({ started: false, pc: 0 });
-  const [msg, setMsg] = useState(null);
-  const [msgColor, setMsgColor] = useState("");
-  console.log("file", file?.name);
-  // Function to fetch attachments
-  const [meetingnumberName, setMeetingnumberName] = useState("");
-  const fetchAttachment = async () => {
-    const BM_Form_Data = await atbtApi.get(`form/list?name=boardmeetingform`);
-    setMeetingnumberName(BM_Form_Data?.data?.Tableview.meetingnumber?.label);
-    if (belongsTo === "boardMeeting") {
-      try {
-        const response = await atbtApi.get(
-          `boardmeeting/getAttachment?MeetingId=${BMid}`
-        );
-        setMeetingData(response.data);
-        console.log(response.data, "response");
-      } catch (error) {
-        console.error("Error fetching attachment:", error);
-      }
-    } else if (belongsTo === "entity") {
-      try {
-        const response = await atbtApi.get(
-          `boardmeeting/getAttachment?EntityId=${id}`
-        );
-        setMeetingData(response.data);
-        console.log(response.data, "response");
-      } catch (error) {
-        console.error("Error fetching attachment:", error);
-      }
-    } else if (belongsTo === "team") {
-      try {
-        const response = await atbtApi.get(
-          `boardmeeting/getAttachment?TeamId=${id}`
-        );
-        setMeetingData(response.data);
-        console.log(response.data, "response");
-      } catch (error) {
-        console.error("Error fetching attachment:", error);
-      }
-    }
-  };
-  useEffect(() => {
-    fetchAttachment();
-  }, [BMid]);
-  function emptyMsg() {
-    setMsg("");
-  }
-  const handleDownload = (fileUrl) => {
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
+const TaskAttachments = ({MeetingData,id,
+  BMid,handleDownload}) => {
   return (
-    <div className="mt-4 overflow-y-auto">
-      {meetingnumberName && (
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
-          <thead>
-            <tr>
-              {id && !BMid && (
-                <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200">
-                  {meetingnumberName}
-                </th>
-              )}
-              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200">
-                Attachment
-              </th>
-              <th
-                className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
-                style={{ width: "200px" }}
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          {MeetingData &&
+    <div className="mt-4">
+      <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md">
+        <thead>
+          <tr>
+            {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200">
+              Initial Decision Taken
+            </th> */}
+
+            {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200">
+              Meeting Id
+            </th> */}
+             <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200">
+              Attachment
+            </th> 
+            <th
+              className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2.5 border-l-2 border-gray-200"
+              style={{ width: "200px" }}
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+
+        {MeetingData &&
             MeetingData.length > 0 &&
             MeetingData.map((attachment, index) => {
               const getFileName = (url) => {
@@ -142,10 +84,9 @@ const Documents = ({ belongsTo }) => {
                 </tbody>
               );
             })}
-        </table>
-      )}
+      </table>
     </div>
   );
 };
 
-export default Documents;
+export default TaskAttachments;
