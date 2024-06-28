@@ -156,7 +156,7 @@ const [activeLink, setActiveLink]= useState('meetingattachments')
               : ""
           }`}
         >
-        Task Attachments
+        Decision Attachments
         </NavLink>
       </div>
 {activeLink === "meetingattachments" &&
@@ -178,8 +178,6 @@ const [activeLink, setActiveLink]= useState('meetingattachments')
         MeetingData={MeetingData}   id={id}
         handleDownload={handleDownload}
         BMid={BMid} 
-    
-    
     />}
     </div>
   );

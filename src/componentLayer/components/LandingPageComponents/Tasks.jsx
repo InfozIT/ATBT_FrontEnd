@@ -988,9 +988,16 @@ const Tasks = () => {
         <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 rounded-md table ">
           <thead>
             <tr>
-              <th className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200">
-                Entity Name
-              </th>
+              {parentPath === "tasks" && (
+                <th className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200">
+                  Module
+                </th>
+              )}
+              {parentPath === "tasks" && (
+                <th className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200">
+                  Name
+                </th>
+              )}
               <th
                 className="sticky top-0  bg-orange-600 text-white text-sm text-left px-2 py-2 border-l-2 border-gray-200"
                 style={{ width: "20rem" }}
@@ -1024,9 +1031,9 @@ const Tasks = () => {
               {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Decision Updated of Admin
               </th> */}
-              {/* <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
+              <th className="sticky top-0 bg-orange-600 text-white text-sm text-left px-3 py-2 border-l-2 border-gray-200">
                 Actions
-              </th> */}
+              </th>
             </tr>
           </thead>
           <tbody className="">
@@ -1039,7 +1046,14 @@ const Tasks = () => {
               }));
               return (
                 <tr key={task.id} className="border-b border-gray-200 ">
-                  <td className="border py-1.5 px-2"> </td>
+                  {parentPath === "tasks" && (
+                    <td className="border py-1.5 px-2">
+                      {task?.createdBy.name}
+                    </td>
+                  )}
+                  {parentPath === "tasks" && (
+                    <td className="border py-1.5 px-2">{task?.blongsTo} </td>
+                  )}
                   <td className="border py-1.5 px-2">
                     <div className="flex items-center justify-between">
                       {isInputActiveID === task.id && (
@@ -1223,10 +1237,14 @@ const Tasks = () => {
                     />
                   </td>
 
-                  <td className="border py-1.5 px-2 text-sm" title={task?.age}>{task?.age} </td>
-                  <td className="border py-1.5 px-2 text-sm" title={task?.status}>
-               {task?.status}
-
+                  <td className="border py-1.5 px-2 text-sm" title={task?.age}>
+                    {task?.age}{" "}
+                  </td>
+                  <td
+                    className="border py-1.5 px-2 text-sm"
+                    title={task?.status}
+                  >
+                    {task?.status}
 
                     {/* <Select
                       options={status}
@@ -1298,9 +1316,9 @@ const Tasks = () => {
                   <td className="border py-1.5 px-2 text-sm text-gray-600">
                     {task?.updatedbyuser}
                   </td>
-                  {/* <td className="border py-1.5 px-2 text-sm text-gray-600">
-                    Updated By Admin
-                  </td> */}
+                  <td className="border py-1.5 px-2 text-sm text-gray-600">
+                    <button>Send Mail</button>
+                  </td>
                   {/* <td className="border py-1.5 px-3 text-sm text-gray-600 cursor-pointer" style={{width :"3rem"}} >
                     <svg
                       onClick={() => handleDeleteTask(task.id)}
