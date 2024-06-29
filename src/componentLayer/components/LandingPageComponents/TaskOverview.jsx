@@ -107,11 +107,11 @@ const TaskOverview = ({
         />
         <hr />
         <div
-          className="overflow-y-scroll content  bg-[#f8fafc]"
-          style={{ maxHeight: "calc(100vh - 12rem)" }}
+          className={` overflow-y-scroll content  bg-[#f8fafc] ${ActiveBar === "Comments" ? "max-h-comment" : "max-h-logs"}`}
+          // style={{ maxHeight: "calc(100vh - 12rem)" }}
         >
           <div className="bg-white">
-            <div className=" p-3 ">
+            <div className=" px-3 pt-3 ">
               <NonEditableFields
                 task={task}
                 age={displayOverviewTask ? task?.age : subTask?.age}
